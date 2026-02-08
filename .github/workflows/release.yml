@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run tests
+        run: go test -v -race -count=1 ./...
+
+      - name: Build binaries
+        run: |
+          VERSION=${GITHUB_REF_NAME}
+          BINARY=protoc-gen-connect-errors
+          mkdir -p dist
+
+          for GOOS in linux darwin; do
+            for GOARCH in amd64 arm64; do
+              OUTPUT="dist/${BINARY}_${GOOS}_${GOARCH}"
+              echo "Building $OUTPUT..."
+              cd cmd/protoc-gen-connect-errors
+              GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "../../$OUTPUT" .
+              cd ../..
+            done
+          done
+
+          # Windows amd64
+          cd cmd/protoc-gen-connect-errors
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=$VERSION" -o "../../dist/${BINARY}_windows_amd64.exe" .
+          cd ../..
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
