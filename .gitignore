@@ -28,5 +28,6 @@ vendor/
 .DS_Store
 Thumbs.db
 
-# Build artifacts
-protoc-gen-connect-errors
+# Build artifacts (binary only, not the source directory)
+/protoc-gen-connect-errors
+cmd/protoc-gen-connect-errors/protoc-gen-connect-errors
