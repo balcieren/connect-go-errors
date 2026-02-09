@@ -1,5 +1,5 @@
 version: v1
-name: buf.build/balcieren/connect-errors
+name: buf.build/balcieren/connect-go-errors
 deps:
   - buf.build/protocolbuffers/wellknowntypes
 breaking:
