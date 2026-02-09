@@ -5,7 +5,7 @@ package examples
 import (
 	"context"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	cerr "github.com/balcieren/connect-go-errors"
 )
 
 // UserRepository is a mock interface for demonstration purposes.
@@ -30,14 +30,14 @@ type UserHandler struct {
 // GetUser retrieves a user by ID.
 func (h *UserHandler) GetUser(ctx context.Context, id string) (*User, error) {
 	if id == "" {
-		return nil, connectgoerrors.New(connectgoerrors.InvalidArgument, connectgoerrors.M{
+		return nil, cerr.New(cerr.ErrInvalidArgument, cerr.M{
 			"reason": "id is required",
 		})
 	}
 
 	user, err := h.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, connectgoerrors.Wrap(connectgoerrors.NotFound, err, connectgoerrors.M{
+		return nil, cerr.Wrap(cerr.ErrNotFound, err, cerr.M{
 			"id": id,
 		})
 	}
@@ -49,14 +49,14 @@ func (h *UserHandler) GetUser(ctx context.Context, id string) (*User, error) {
 func (h *UserHandler) CreateUser(ctx context.Context, email, name string) (*User, error) {
 	exists, _ := h.repo.EmailExists(ctx, email)
 	if exists {
-		return nil, connectgoerrors.New(connectgoerrors.AlreadyExists, connectgoerrors.M{
+		return nil, cerr.New(cerr.ErrAlreadyExists, cerr.M{
 			"id": email,
 		})
 	}
 
 	user, err := h.repo.Create(ctx, email, name)
 	if err != nil {
-		return nil, connectgoerrors.Wrap(connectgoerrors.Internal, err, connectgoerrors.M{})
+		return nil, cerr.Wrap(cerr.ErrInternal, err, cerr.M{})
 	}
 
 	return user, nil

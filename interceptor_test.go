@@ -19,7 +19,7 @@ func TestErrorInterceptor(t *testing.T) {
 	})
 
 	// Simulate a handler that returns a domain error
-	domainErr := connectgoerrors.New(connectgoerrors.NotFound, connectgoerrors.M{"resource": "user", "id": "42"})
+	domainErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"resource": "user", "id": "42"})
 
 	handler := interceptor(func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
 		return nil, domainErr
@@ -33,8 +33,8 @@ func TestErrorInterceptor(t *testing.T) {
 	if capturedErr == nil {
 		t.Fatal("expected interceptor callback to be invoked")
 	}
-	if captured.Code != connectgoerrors.NotFound {
-		t.Errorf("captured code = %q, want %q", captured.Code, connectgoerrors.NotFound)
+	if captured.Code != connectgoerrors.ErrNotFound {
+		t.Errorf("captured code = %q, want %q", captured.Code, connectgoerrors.ErrNotFound)
 	}
 }
 

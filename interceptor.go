@@ -21,7 +21,7 @@ type ErrorInterceptorFunc func(ctx context.Context, connectErr *connect.Error, d
 //
 // Example:
 //
-//	interceptor := cge.ErrorInterceptor(func(ctx context.Context, err *connect.Error, def cge.Error) {
+//	interceptor := cerr.ErrorInterceptor(func(ctx context.Context, err *connect.Error, def cerr.Error) {
 //	    slog.ErrorContext(ctx, "rpc error",
 //	        "code", def.Code,
 //	        "connect_code", def.ConnectCode,

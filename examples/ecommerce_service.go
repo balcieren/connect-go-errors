@@ -5,11 +5,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	cerr "github.com/balcieren/connect-go-errors"
 )
 
 func init() {
-	connectgoerrors.RegisterAll([]connectgoerrors.Error{
+	cerr.RegisterAll([]cerr.Error{
 		{
 			Code:        "ERROR_OUT_OF_STOCK",
 			MessageTpl:  "Product '{{product_id}}' is out of stock",
@@ -37,20 +37,20 @@ type EcommerceService struct{}
 // AddToCart adds a product to the shopping cart.
 func (s *EcommerceService) AddToCart(ctx context.Context, productID string, quantity int) error {
 	if productID == "" {
-		return connectgoerrors.New(connectgoerrors.InvalidArgument, connectgoerrors.M{
+		return cerr.New(cerr.ErrInvalidArgument, cerr.M{
 			"reason": "product_id is required",
 		})
 	}
 
 	if quantity > 100 {
-		return connectgoerrors.New("ERROR_CART_LIMIT", connectgoerrors.M{
+		return cerr.New("ERROR_CART_LIMIT", cerr.M{
 			"max": "100",
 		})
 	}
 
 	// Simulate out of stock
 	if productID == "DISCONTINUED" {
-		return connectgoerrors.New("ERROR_OUT_OF_STOCK", connectgoerrors.M{
+		return cerr.New("ERROR_OUT_OF_STOCK", cerr.M{
 			"product_id": productID,
 		})
 	}
@@ -62,7 +62,7 @@ func (s *EcommerceService) AddToCart(ctx context.Context, productID string, quan
 func (s *EcommerceService) SetShippingRegion(ctx context.Context, region string) error {
 	blocked := map[string]bool{"ANTARCTICA": true, "MOON": true}
 	if blocked[region] {
-		return connectgoerrors.New("ERROR_SHIPPING_UNAVAILABLE", connectgoerrors.M{
+		return cerr.New("ERROR_SHIPPING_UNAVAILABLE", cerr.M{
 			"region": region,
 		})
 	}

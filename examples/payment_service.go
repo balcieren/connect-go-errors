@@ -6,11 +6,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	cerr "github.com/balcieren/connect-go-errors"
 )
 
 func init() {
-	connectgoerrors.RegisterAll([]connectgoerrors.Error{
+	cerr.RegisterAll([]cerr.Error{
 		{
 			Code:        "ERROR_INSUFFICIENT_FUNDS",
 			MessageTpl:  "Insufficient funds: requested {{amount}}, available {{balance}}",
@@ -38,14 +38,14 @@ type PaymentService struct{}
 // ProcessPayment processes a payment.
 func (s *PaymentService) ProcessPayment(ctx context.Context, orderID string, amount float64, cardLast4 string) error {
 	if amount <= 0 {
-		return connectgoerrors.New(connectgoerrors.InvalidArgument, connectgoerrors.M{
+		return cerr.New(cerr.ErrInvalidArgument, cerr.M{
 			"reason": "amount must be positive",
 		})
 	}
 
 	balance := 50.0
 	if amount > balance {
-		return connectgoerrors.New("ERROR_INSUFFICIENT_FUNDS", connectgoerrors.M{
+		return cerr.New("ERROR_INSUFFICIENT_FUNDS", cerr.M{
 			"amount":  fmt.Sprintf("%.2f", amount),
 			"balance": fmt.Sprintf("%.2f", balance),
 		})

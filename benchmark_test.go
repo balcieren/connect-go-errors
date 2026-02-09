@@ -26,7 +26,7 @@ func BenchmarkLookup(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		Lookup(NotFound)
+		Lookup(ErrNotFound)
 	}
 }
 
@@ -35,7 +35,7 @@ func BenchmarkLookupParallel(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			Lookup(NotFound)
+			Lookup(ErrNotFound)
 		}
 	})
 }
@@ -45,7 +45,7 @@ func BenchmarkErr(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		New(NotFound, data)
+		New(ErrNotFound, data)
 	}
 }
 
@@ -55,7 +55,7 @@ func BenchmarkErrParallel(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			New(NotFound, data)
+			New(ErrNotFound, data)
 		}
 	})
 }

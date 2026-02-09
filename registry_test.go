@@ -10,20 +10,20 @@ import (
 
 func TestRegistryDefaultEntries(t *testing.T) {
 	codes := []string{
-		connectgoerrors.NotFound,
-		connectgoerrors.InvalidArgument,
-		connectgoerrors.AlreadyExists,
-		connectgoerrors.PermissionDenied,
-		connectgoerrors.Unauthenticated,
-		connectgoerrors.Internal,
-		connectgoerrors.Unavailable,
-		connectgoerrors.DeadlineExceeded,
-		connectgoerrors.ResourceExhausted,
-		connectgoerrors.FailedPrecondition,
-		connectgoerrors.Aborted,
-		connectgoerrors.Unimplemented,
-		connectgoerrors.Canceled,
-		connectgoerrors.DataLoss,
+		connectgoerrors.ErrNotFound,
+		connectgoerrors.ErrInvalidArgument,
+		connectgoerrors.ErrAlreadyExists,
+		connectgoerrors.ErrPermissionDenied,
+		connectgoerrors.ErrUnauthenticated,
+		connectgoerrors.ErrInternal,
+		connectgoerrors.ErrUnavailable,
+		connectgoerrors.ErrDeadlineExceeded,
+		connectgoerrors.ErrResourceExhausted,
+		connectgoerrors.ErrFailedPrecondition,
+		connectgoerrors.ErrAborted,
+		connectgoerrors.ErrUnimplemented,
+		connectgoerrors.ErrCanceled,
+		connectgoerrors.ErrDataLoss,
 	}
 
 	for _, code := range codes {
@@ -47,14 +47,14 @@ func TestRegistryConnectCodes(t *testing.T) {
 		code        string
 		connectCode connect.Code
 	}{
-		{connectgoerrors.NotFound, connect.CodeNotFound},
-		{connectgoerrors.InvalidArgument, connect.CodeInvalidArgument},
-		{connectgoerrors.AlreadyExists, connect.CodeAlreadyExists},
-		{connectgoerrors.PermissionDenied, connect.CodePermissionDenied},
-		{connectgoerrors.Unauthenticated, connect.CodeUnauthenticated},
-		{connectgoerrors.Internal, connect.CodeInternal},
-		{connectgoerrors.Unavailable, connect.CodeUnavailable},
-		{connectgoerrors.DeadlineExceeded, connect.CodeDeadlineExceeded},
+		{connectgoerrors.ErrNotFound, connect.CodeNotFound},
+		{connectgoerrors.ErrInvalidArgument, connect.CodeInvalidArgument},
+		{connectgoerrors.ErrAlreadyExists, connect.CodeAlreadyExists},
+		{connectgoerrors.ErrPermissionDenied, connect.CodePermissionDenied},
+		{connectgoerrors.ErrUnauthenticated, connect.CodeUnauthenticated},
+		{connectgoerrors.ErrInternal, connect.CodeInternal},
+		{connectgoerrors.ErrUnavailable, connect.CodeUnavailable},
+		{connectgoerrors.ErrDeadlineExceeded, connect.CodeDeadlineExceeded},
 	}
 
 	for _, tt := range tests {
@@ -68,8 +68,8 @@ func TestRegistryConnectCodes(t *testing.T) {
 }
 
 func TestRegistryRetryable(t *testing.T) {
-	retryable := []string{connectgoerrors.Unavailable, connectgoerrors.DeadlineExceeded, connectgoerrors.ResourceExhausted, connectgoerrors.Aborted}
-	notRetryable := []string{connectgoerrors.NotFound, connectgoerrors.InvalidArgument, connectgoerrors.Internal}
+	retryable := []string{connectgoerrors.ErrUnavailable, connectgoerrors.ErrDeadlineExceeded, connectgoerrors.ErrResourceExhausted, connectgoerrors.ErrAborted}
+	notRetryable := []string{connectgoerrors.ErrNotFound, connectgoerrors.ErrInvalidArgument, connectgoerrors.ErrInternal}
 
 	for _, code := range retryable {
 		e, _ := connectgoerrors.Lookup(code)
@@ -128,8 +128,8 @@ func TestMustLookupPanic(t *testing.T) {
 }
 
 func TestMustLookupSuccess(t *testing.T) {
-	e := connectgoerrors.MustLookup(connectgoerrors.NotFound)
-	if e.Code != connectgoerrors.NotFound {
+	e := connectgoerrors.MustLookup(connectgoerrors.ErrNotFound)
+	if e.Code != connectgoerrors.ErrNotFound {
 		t.Errorf("Code = %q", e.Code)
 	}
 }
@@ -159,7 +159,7 @@ func TestCodes(t *testing.T) {
 	for _, c := range codes {
 		found[c] = true
 	}
-	for _, want := range []string{connectgoerrors.NotFound, connectgoerrors.Internal, connectgoerrors.Canceled} {
+	for _, want := range []string{connectgoerrors.ErrNotFound, connectgoerrors.ErrInternal, connectgoerrors.ErrCanceled} {
 		if !found[want] {
 			t.Errorf("expected code %q in Codes()", want)
 		}
