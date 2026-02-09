@@ -9,7 +9,7 @@ all: test build
 ## Build the protoc plugin binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	cd cmd/protoc-gen-connect-errors && go build $(LDFLAGS) -o ../../bin/$(BINARY_NAME) .
+	go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/protoc-gen-connect-errors
 
 ## Run all tests with coverage
 test:
@@ -27,9 +27,9 @@ clean:
 	rm -rf bin/ dist/
 
 ## Install the plugin binary to GOPATH/bin
-install: build
+install:
 	@echo "Installing $(BINARY_NAME)..."
-	cp bin/$(BINARY_NAME) $(GOPATH)/bin/
+	go install ./cmd/protoc-gen-connect-errors
 
 ## Generate code from proto files (requires buf)
 proto-gen:
