@@ -112,23 +112,23 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P("import (")
 	g.P(`	"connectrpc.com/connect"`)
 	g.P()
-	g.P(`	cge "github.com/balcieren/connect-go-errors"`)
+	g.P(`	cerr "github.com/balcieren/connect-go-errors"`)
 	g.P(")")
 	g.P()
 
-	// Generate constants
-	g.P("// Error code constants.")
-	g.P("const (")
+	// Generate error sentinel variables
+	g.P("// Error sentinel variables for use with errors.Is and cerr.New.")
+	g.P("var (")
 	for _, e := range errors {
-		constName := errorCodeToConstant(e.Code)
-		g.P(fmt.Sprintf("\t%s = %q", constName, e.Code))
+		varName := "Err" + errorCodeToConstant(e.Code)
+		g.P(fmt.Sprintf("\t%s = cerr.NewCodedError(%q)", varName, e.Code))
 	}
 	g.P(")")
 	g.P()
 
 	// Generate init function
 	g.P("func init() {")
-	g.P("\tcge.RegisterAll([]cge.Error{")
+	g.P("\tcerr.RegisterAll([]cerr.Error{")
 	for _, e := range errors {
 		g.P("\t\t{")
 		g.P(fmt.Sprintf("\t\t\tCode:        %q,", e.Code))
