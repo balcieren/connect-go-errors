@@ -25,9 +25,9 @@ jobs:
 
       - uses: bufbuild/buf-lint-action@v1
         with:
-          input: proto/connect
+          input: .
 
       - uses: bufbuild/buf-push-action@v1
         with:
-          input: proto/connect
           buf_token: ${{ secrets.BUF_TOKEN }}
+          input: .
