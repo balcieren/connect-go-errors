@@ -141,7 +141,7 @@ service UserService {
       connect_code: "not_found"
       retryable: false
     };
-    option (connect.v1.connect_error) = {
+    option (connectgoerrors.v1.connect_error) = {
       code: "ERROR_INVALID_USER_ID"
       message: "Invalid user ID format: '{{id}}'"
       connect_code: "invalid_argument"
@@ -150,13 +150,13 @@ service UserService {
   };
 
   rpc DeleteUser(DeleteUserRequest) returns (Empty) {
-    option (connect.v1.connect_error) = {
+    option (connectgoerrors.v1.connect_error) = {
       code: "ERROR_USER_NOT_FOUND"
       message: "User '{{id}}' not found"
       connect_code: "not_found"
       retryable: false
     };
-    option (connect.v1.connect_error) = {
+    option (connectgoerrors.v1.connect_error) = {
       code: "ERROR_DELETE_FORBIDDEN"
       message: "Cannot delete user: {{reason}}"
       connect_code: "permission_denied"
@@ -396,22 +396,22 @@ msg := cerr.FormatTemplate("User '{{id}}'", cerr.M{"id": "123"})
 
 These codes are pre-registered and ready to use:
 
-| Constant             | Code                        | Connect Code             | Retryable |
-| -------------------- | --------------------------- | ------------------------ | --------- |
-| `NotFound`           | `ERROR_NOT_FOUND`           | `CodeNotFound`           | No        |
-| `InvalidArgument`    | `ERROR_INVALID_ARGUMENT`    | `CodeInvalidArgument`    | No        |
-| `AlreadyExists`      | `ERROR_ALREADY_EXISTS`      | `CodeAlreadyExists`      | No        |
-| `PermissionDenied`   | `ERROR_PERMISSION_DENIED`   | `CodePermissionDenied`   | No        |
-| `Unauthenticated`    | `ERROR_UNAUTHENTICATED`     | `CodeUnauthenticated`    | No        |
-| `Internal`           | `ERROR_INTERNAL`            | `CodeInternal`           | No        |
-| `Unavailable`        | `ERROR_UNAVAILABLE`         | `CodeUnavailable`        | Yes       |
-| `DeadlineExceeded`   | `ERROR_DEADLINE_EXCEEDED`   | `CodeDeadlineExceeded`   | Yes       |
-| `ResourceExhausted`  | `ERROR_RESOURCE_EXHAUSTED`  | `CodeResourceExhausted`  | Yes       |
-| `FailedPrecondition` | `ERROR_FAILED_PRECONDITION` | `CodeFailedPrecondition` | No        |
-| `Aborted`            | `ERROR_ABORTED`             | `CodeAborted`            | Yes       |
-| `Unimplemented`      | `ERROR_UNIMPLEMENTED`       | `CodeUnimplemented`      | No        |
-| `Canceled`           | `ERROR_CANCELED`            | `CodeCanceled`           | No        |
-| `DataLoss`           | `ERROR_DATA_LOSS`           | `CodeDataLoss`           | No        |
+| Constant                | Code                        | Connect Code             | Retryable |
+| ----------------------- | --------------------------- | ------------------------ | --------- |
+| `ErrNotFound`           | `ERROR_NOT_FOUND`           | `CodeNotFound`           | No        |
+| `ErrInvalidArgument`    | `ERROR_INVALID_ARGUMENT`    | `CodeInvalidArgument`    | No        |
+| `ErrAlreadyExists`      | `ERROR_ALREADY_EXISTS`      | `CodeAlreadyExists`      | No        |
+| `ErrPermissionDenied`   | `ERROR_PERMISSION_DENIED`   | `CodePermissionDenied`   | No        |
+| `ErrUnauthenticated`    | `ERROR_UNAUTHENTICATED`     | `CodeUnauthenticated`    | No        |
+| `ErrInternal`           | `ERROR_INTERNAL`            | `CodeInternal`           | No        |
+| `ErrUnavailable`        | `ERROR_UNAVAILABLE`         | `CodeUnavailable`        | Yes       |
+| `ErrDeadlineExceeded`   | `ERROR_DEADLINE_EXCEEDED`   | `CodeDeadlineExceeded`   | Yes       |
+| `ErrResourceExhausted`  | `ERROR_RESOURCE_EXHAUSTED`  | `CodeResourceExhausted`  | Yes       |
+| `ErrFailedPrecondition` | `ERROR_FAILED_PRECONDITION` | `CodeFailedPrecondition` | No        |
+| `ErrAborted`            | `ERROR_ABORTED`             | `CodeAborted`            | Yes       |
+| `ErrUnimplemented`      | `ERROR_UNIMPLEMENTED`       | `CodeUnimplemented`      | No        |
+| `ErrCanceled`           | `ERROR_CANCELED`            | `CodeCanceled`           | No        |
+| `ErrDataLoss`           | `ERROR_DATA_LOSS`           | `CodeDataLoss`           | No        |
 
 ---
 
