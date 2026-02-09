@@ -34,16 +34,12 @@ jobs:
             for GOARCH in amd64 arm64; do
               OUTPUT="dist/${BINARY}_${GOOS}_${GOARCH}"
               echo "Building $OUTPUT..."
-              cd cmd/protoc-gen-connect-errors
-              GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "../../$OUTPUT" .
-              cd ../..
+              GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUTPUT" ./cmd/protoc-gen-connect-errors
             done
           done
 
           # Windows amd64
-          cd cmd/protoc-gen-connect-errors
-          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=$VERSION" -o "../../dist/${BINARY}_windows_amd64.exe" .
-          cd ../..
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=$VERSION" -o "dist/${BINARY}_windows_amd64.exe" ./cmd/protoc-gen-connect-errors
 
       - name: Create release
         uses: softprops/action-gh-release@v2
