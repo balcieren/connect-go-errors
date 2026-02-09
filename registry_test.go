@@ -1,6 +1,8 @@
 package connectgoerrors_test
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -164,4 +166,40 @@ func TestCodes(t *testing.T) {
 			t.Errorf("expected code %q in Codes()", want)
 		}
 	}
+}
+
+func TestConcurrentRegistration(t *testing.T) {
+	// This test validates that Register is thread-safe.
+	const numGoroutines = 10
+	const numOps = 100
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines * 2)
+
+	// Writers
+	for i := 0; i < numGoroutines; i++ {
+		go func(id int) {
+			defer wg.Done()
+			for j := 0; j < numOps; j++ {
+				code := fmt.Sprintf("ERR_CONCURRENT_%d_%d", id, j)
+				connectgoerrors.Register(connectgoerrors.Error{
+					Code:        code,
+					MessageTpl:  "Concurrent error",
+					ConnectCode: connect.CodeInternal,
+				})
+			}
+		}(i)
+	}
+
+	// Readers
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			for j := 0; j < numOps; j++ {
+				_, _ = connectgoerrors.Lookup(connectgoerrors.ErrNotFound)
+				_ = connectgoerrors.Codes()
+			}
+		}()
+	}
+
+	wg.Wait()
 }
