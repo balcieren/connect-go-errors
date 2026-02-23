@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	connecterrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-errors-go"
 )
 
 func TestErrorInterceptor(t *testing.T) {

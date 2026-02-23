@@ -9,8 +9,8 @@
 ## Getting Started
 
 ```bash
-git clone https://github.com/balcieren/connect-go-errors.git
-cd connect-go-errors
+git clone https://github.com/balcieren/connect-errors-go.git
+cd connect-errors-go
 go mod download
 make test
 ```

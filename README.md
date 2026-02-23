@@ -1,8 +1,8 @@
-# connect-go-errors
+# connect-errors-go
 
-[![Test](https://github.com/balcieren/connect-go-errors/actions/workflows/test.yml/badge.svg)](https://github.com/balcieren/connect-go-errors/actions/workflows/test.yml)
-[![Lint](https://github.com/balcieren/connect-go-errors/actions/workflows/lint.yml/badge.svg)](https://github.com/balcieren/connect-go-errors/actions/workflows/lint.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/balcieren/connect-go-errors.svg)](https://pkg.go.dev/github.com/balcieren/connect-go-errors)
+[![Test](https://github.com/balcieren/connect-errors-go/actions/workflows/test.yml/badge.svg)](https://github.com/balcieren/connect-errors-go/actions/workflows/test.yml)
+[![Lint](https://github.com/balcieren/connect-errors-go/actions/workflows/lint.yml/badge.svg)](https://github.com/balcieren/connect-errors-go/actions/workflows/lint.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/balcieren/connect-errors-go.svg)](https://pkg.go.dev/github.com/balcieren/connect-errors-go)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Define errors in `.proto`, generate type-safe Go constructors, catch bugs at compile time.**
@@ -42,8 +42,8 @@ return nil, userv1.NewUserNotFound(userv1.UserNotFoundParams{
 ## Quick Start
 
 ```bash
-go get github.com/balcieren/connect-go-errors
-go install github.com/balcieren/connect-go-errors/cmd/protoc-gen-connect-errors@latest
+go get github.com/balcieren/connect-errors-go
+go install github.com/balcieren/connect-errors-go/cmd/protoc-gen-connect-errors@latest
 ```
 
 ---
@@ -166,7 +166,7 @@ package userv1
 
 import (
     "connectrpc.com/connect"
-    cerr "github.com/balcieren/connect-go-errors"
+    cerr "github.com/balcieren/connect-errors-go"
 )
 
 // Typed error code constants.
@@ -345,7 +345,7 @@ your-project/
 If you don't use proto-based definitions, you can define errors manually:
 
 ```go
-import cerr "github.com/balcieren/connect-go-errors"
+import cerr "github.com/balcieren/connect-errors-go"
 
 // Define typed constants
 const ErrEmailTaken cerr.ErrorCode = "ERROR_EMAIL_TAKEN"

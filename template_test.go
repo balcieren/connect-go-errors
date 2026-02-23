@@ -3,7 +3,7 @@ package connecterrors_test
 import (
 	"testing"
 
-	connecterrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-errors-go"
 )
 
 func TestTemplateFields(t *testing.T) {
