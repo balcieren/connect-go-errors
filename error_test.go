@@ -8,6 +8,7 @@ import (
 	"connectrpc.com/connect"
 
 	connecterrors "github.com/balcieren/connect-errors-go"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func TestNew(t *testing.T) {
@@ -376,5 +377,46 @@ func TestIsXxxPatternRawConnectError(t *testing.T) {
 	rawErr := connect.NewError(connect.CodeNotFound, errors.New("not found"))
 	if isErrorCode(rawErr, connecterrors.ErrNotFound) {
 		t.Error("expected false for connect error without x-error-code metadata")
+	}
+}
+func TestCodedErrorErrorCodeDeprecated(t *testing.T) {
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
+	// ErrorCode() is deprecated but should still work
+	if sentinel.ErrorCode() != string(connecterrors.ErrNotFound) {
+		t.Errorf("ErrorCode() = %q, want %q", sentinel.ErrorCode(), connecterrors.ErrNotFound)
+	}
+}
+
+func TestWithMultipleDetails(t *testing.T) {
+	connectErr := connecterrors.New(connecterrors.ErrInvalidArgument, connecterrors.M{"reason": "bad"})
+
+	// Use real proto messages for details
+	d1, err := connect.NewErrorDetail(&emptypb.Empty{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	d2, err := connect.NewErrorDetail(&emptypb.Empty{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	connecterrors.WithDetails(connectErr, d1, d2)
+
+	if len(connectErr.Details()) != 2 {
+		t.Errorf("len(Details) = %d, want 2", len(connectErr.Details()))
+	}
+}
+
+func TestErrorCodeCode(t *testing.T) {
+	code := connecterrors.ErrorCode("TEST")
+	if code.Code() != "TEST" {
+		t.Errorf("ErrorCode.Code() = %q, want TEST", code.Code())
+	}
+}
+
+func TestCodedErrorCodeNil(t *testing.T) {
+	var e *connecterrors.CodedError
+	if e.Code() != "" {
+		t.Errorf("Code() = %q, want empty string for nil receiver", e.Code())
 	}
 }

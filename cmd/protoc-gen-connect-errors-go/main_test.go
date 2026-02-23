@@ -84,11 +84,24 @@ func TestMapConnectCode(t *testing.T) {
 		code int
 		want string
 	}{
-		{"not_found", 5, "connect.CodeNotFound"},
-		{"internal", 13, "connect.CodeInternal"},
+		{"canceled", 1, "connect.CodeCanceled"},
+		{"unknown", 2, "connect.CodeUnknown"},
 		{"invalid_argument", 3, "connect.CodeInvalidArgument"},
+		{"deadline_exceeded", 4, "connect.CodeDeadlineExceeded"},
+		{"not_found", 5, "connect.CodeNotFound"},
+		{"already_exists", 6, "connect.CodeAlreadyExists"},
+		{"permission_denied", 7, "connect.CodePermissionDenied"},
+		{"resource_exhausted", 8, "connect.CodeResourceExhausted"},
+		{"failed_precondition", 9, "connect.CodeFailedPrecondition"},
+		{"aborted", 10, "connect.CodeAborted"},
+		{"out_of_range", 11, "connect.CodeOutOfRange"},
+		{"unimplemented", 12, "connect.CodeUnimplemented"},
+		{"internal", 13, "connect.CodeInternal"},
+		{"unavailable", 14, "connect.CodeUnavailable"},
+		{"data_loss", 15, "connect.CodeDataLoss"},
 		{"unauthenticated", 16, "connect.CodeUnauthenticated"},
-		{"unknown_code", 99, "connect.CodeInternal"}, // fallback
+		{"fallback_unknown", 99, "connect.CodeInternal"},
+		{"fallback_zero", 0, "connect.CodeInternal"},
 	}
 
 	for _, tt := range tests {
@@ -98,5 +111,39 @@ func TestMapConnectCode(t *testing.T) {
 				t.Errorf("mapConnectCode(%d) = %q, want %q", tt.code, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestParseErrorDef(t *testing.T) {
+	// Manual protobuf wire format construction
+	// ErrorDef {
+	//   code (1): "ERR_TEST"
+	//   message (2): "msg"
+	//   connect_code (3): 5 (not_found)
+	//   retryable (4): true
+	// }
+	data := []byte{
+		0x0a, 0x08, 'E', 'R', 'R', '_', 'T', 'E', 'S', 'T', // tag 1 (string): "ERR_TEST"
+		0x12, 0x03, 'm', 's', 'g', // tag 2 (string): "msg"
+		0x18, 0x05, // tag 3 (varint): 5
+		0x20, 0x01, // tag 4 (varint): 1
+	}
+
+	got, ok := parseErrorDef(data)
+	if !ok {
+		t.Fatal("parseErrorDef failed")
+	}
+
+	if got.Code != "ERR_TEST" {
+		t.Errorf("Code = %q, want ERR_TEST", got.Code)
+	}
+	if got.Message != "msg" {
+		t.Errorf("Message = %q, want msg", got.Message)
+	}
+	if got.ConnectCode != 5 {
+		t.Errorf("ConnectCode = %d, want 5", got.ConnectCode)
+	}
+	if !got.Retryable {
+		t.Error("Retryable = false, want true")
 	}
 }
