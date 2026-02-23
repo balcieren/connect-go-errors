@@ -21,7 +21,7 @@ var (
 	headerRetryable = "x-retryable"
 )
 
-// SetHeaderKeys refactores the metadata keys used for error codes and retryable flags.
+// SetHeaderKeys reconfigures the metadata keys used for error codes and retryable flags.
 // This is useful if you need to avoid collisions or follow a different naming convention.
 //
 // Example:
@@ -45,8 +45,6 @@ func setMeta(connectErr *connect.Error, e Error) {
 		connectErr.Meta().Set(headerRetryable, "false")
 	}
 }
-
-// ... (skipping unchanged SetHeaderKeys implementation) ...
 
 // FromError extracts error metadata from a *connect.Error's headers/trailers.
 // It reads the configured error code metadata (default "x-error-code") to look up

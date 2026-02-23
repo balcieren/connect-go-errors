@@ -46,6 +46,9 @@ const (
 	// ErrAborted indicates the operation was aborted (e.g. concurrency conflict).
 	ErrAborted = "ERROR_ABORTED"
 
+	// ErrOutOfRange indicates a value is out of the accepted range.
+	ErrOutOfRange = "ERROR_OUT_OF_RANGE"
+
 	// ErrUnimplemented indicates the operation is not implemented or supported.
 	ErrUnimplemented = "ERROR_UNIMPLEMENTED"
 
@@ -148,6 +151,12 @@ var defaultErrors = map[string]Error{
 		ConnectCode: connect.CodeAborted,
 		Retryable:   true,
 	},
+	ErrOutOfRange: {
+		Code:        ErrOutOfRange,
+		MessageTpl:  "Value out of range: {{reason}}",
+		ConnectCode: connect.CodeOutOfRange,
+		Retryable:   false,
+	},
 	ErrUnimplemented: {
 		Code:        ErrUnimplemented,
 		MessageTpl:  "Operation not implemented",
@@ -212,7 +221,7 @@ func RegisterAll(errs []Error) {
 //
 // Example:
 //
-//	e, ok := connectgoerrors.Lookup(connectgoerrors.NotFound)
+//	e, ok := connectgoerrors.Lookup(connectgoerrors.ErrNotFound)
 func Lookup(code string) (Error, bool) {
 	m := loadRegistry()
 	e, ok := m[code]
