@@ -1,4 +1,4 @@
-package connectgoerrors_test
+package connecterrors_test
 
 import (
 	"errors"
@@ -7,26 +7,26 @@ import (
 
 	"connectrpc.com/connect"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-go-errors"
 )
 
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name        string
-		code        connectgoerrors.ErrorCode
-		data        connectgoerrors.M
+		code        connecterrors.ErrorCode
+		data        connecterrors.M
 		wantCode    connect.Code
 		wantContain string
 	}{
-		{"not found", connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"}, connect.CodeNotFound, "Resource '123' not found"},
-		{"invalid argument", connectgoerrors.ErrInvalidArgument, connectgoerrors.M{"reason": "email required"}, connect.CodeInvalidArgument, "Invalid argument: email required"},
-		{"already exists", connectgoerrors.ErrAlreadyExists, connectgoerrors.M{"id": "a@b.com"}, connect.CodeAlreadyExists, "Resource 'a@b.com' already exists"},
-		{"unauthenticated", connectgoerrors.ErrUnauthenticated, nil, connect.CodeUnauthenticated, "Authentication required"},
+		{"not found", connecterrors.ErrNotFound, connecterrors.M{"id": "123"}, connect.CodeNotFound, "Resource '123' not found"},
+		{"invalid argument", connecterrors.ErrInvalidArgument, connecterrors.M{"reason": "email required"}, connect.CodeInvalidArgument, "Invalid argument: email required"},
+		{"already exists", connecterrors.ErrAlreadyExists, connecterrors.M{"id": "a@b.com"}, connect.CodeAlreadyExists, "Resource 'a@b.com' already exists"},
+		{"unauthenticated", connecterrors.ErrUnauthenticated, nil, connect.CodeUnauthenticated, "Authentication required"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := connectgoerrors.New(tt.code, tt.data)
+			err := connecterrors.New(tt.code, tt.data)
 			if err == nil {
 				t.Fatal("expected non-nil error")
 			}
@@ -44,25 +44,25 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewUnknownCode(t *testing.T) {
-	err := connectgoerrors.New(connectgoerrors.ErrorCode("NONEXISTENT"), nil)
+	err := connecterrors.New(connecterrors.ErrorCode("NONEXISTENT"), nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
 }
 
 func TestNewRetryableMetadata(t *testing.T) {
-	err := connectgoerrors.New(connectgoerrors.ErrUnavailable, nil)
+	err := connecterrors.New(connecterrors.ErrUnavailable, nil)
 	if got := err.Meta().Get("x-retryable"); got != "true" {
 		t.Errorf("Unavailable x-retryable = %q, want true", got)
 	}
-	err = connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "1"})
+	err = connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "1"})
 	if got := err.Meta().Get("x-retryable"); got != "false" {
 		t.Errorf("NotFound x-retryable = %q, want false", got)
 	}
 }
 
 func TestNewWithMessage(t *testing.T) {
-	err := connectgoerrors.NewWithMessage(connectgoerrors.ErrNotFound, "User '{{id}}' gone from '{{tenant}}'", connectgoerrors.M{"id": "123", "tenant": "acme"})
+	err := connecterrors.NewWithMessage(connecterrors.ErrNotFound, "User '{{id}}' gone from '{{tenant}}'", connecterrors.M{"id": "123", "tenant": "acme"})
 	if !strings.Contains(err.Error(), "User '123' gone from 'acme'") {
 		t.Errorf("Error() = %q, should contain message", err.Error())
 	}
@@ -72,14 +72,14 @@ func TestNewWithMessage(t *testing.T) {
 }
 
 func TestNewWithMessageUnknownCode(t *testing.T) {
-	err := connectgoerrors.NewWithMessage(connectgoerrors.ErrorCode("NONEXISTENT"), "msg", nil)
+	err := connecterrors.NewWithMessage(connecterrors.ErrorCode("NONEXISTENT"), "msg", nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
 }
 
 func TestFromCode(t *testing.T) {
-	err := connectgoerrors.FromCode(connect.CodeInternal, "db error")
+	err := connecterrors.FromCode(connect.CodeInternal, "db error")
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("Code() = %v", err.Code())
 	}
@@ -90,7 +90,7 @@ func TestFromCode(t *testing.T) {
 
 func TestWrap(t *testing.T) {
 	orig := errors.New("connection refused")
-	err := connectgoerrors.Wrap(connectgoerrors.ErrNotFound, orig, connectgoerrors.M{"id": "456"})
+	err := connecterrors.Wrap(connecterrors.ErrNotFound, orig, connecterrors.M{"id": "456"})
 	if err.Code() != connect.CodeNotFound {
 		t.Errorf("Code() = %v", err.Code())
 	}
@@ -104,61 +104,61 @@ func TestWrap(t *testing.T) {
 }
 
 func TestWrapUnknownCode(t *testing.T) {
-	err := connectgoerrors.Wrap(connectgoerrors.ErrorCode("NONEXISTENT"), errors.New("fail"), nil)
+	err := connecterrors.Wrap(connecterrors.ErrorCode("NONEXISTENT"), errors.New("fail"), nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
 }
 
 func TestIsRetryable(t *testing.T) {
-	if !connectgoerrors.IsRetryable(connectgoerrors.ErrUnavailable) {
+	if !connecterrors.IsRetryable(connecterrors.ErrUnavailable) {
 		t.Error("Unavailable should be retryable")
 	}
-	if connectgoerrors.IsRetryable(connectgoerrors.ErrNotFound) {
+	if connecterrors.IsRetryable(connecterrors.ErrNotFound) {
 		t.Error("NotFound should not be retryable")
 	}
-	if connectgoerrors.IsRetryable(connectgoerrors.ErrorCode("NONEXISTENT")) {
+	if connecterrors.IsRetryable(connecterrors.ErrorCode("NONEXISTENT")) {
 		t.Error("unknown should not be retryable")
 	}
 }
 
 func TestConnectCode(t *testing.T) {
-	if got := connectgoerrors.ConnectCode(connectgoerrors.ErrNotFound); got != connect.CodeNotFound {
+	if got := connecterrors.ConnectCode(connecterrors.ErrNotFound); got != connect.CodeNotFound {
 		t.Errorf("got %v, want CodeNotFound", got)
 	}
-	if got := connectgoerrors.ConnectCode(connectgoerrors.ErrorCode("NONEXISTENT")); got != connect.CodeInternal {
+	if got := connecterrors.ConnectCode(connecterrors.ErrorCode("NONEXISTENT")); got != connect.CodeInternal {
 		t.Errorf("got %v, want CodeInternal", got)
 	}
 }
 
 func TestNewf(t *testing.T) {
-	err := connectgoerrors.Newf(connectgoerrors.ErrNotFound, "User %q not found in org %s", "alice", "acme")
+	err := connecterrors.Newf(connecterrors.ErrNotFound, "User %q not found in org %s", "alice", "acme")
 	if err.Code() != connect.CodeNotFound {
 		t.Errorf("Code() = %v, want CodeNotFound", err.Code())
 	}
 	if !strings.Contains(err.Error(), `User "alice" not found in org acme`) {
 		t.Errorf("Error() = %q, should contain formatted message", err.Error())
 	}
-	if got := err.Meta().Get("x-error-code"); got != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("x-error-code = %q, want %q", got, connectgoerrors.ErrNotFound)
+	if got := err.Meta().Get("x-error-code"); got != string(connecterrors.ErrNotFound) {
+		t.Errorf("x-error-code = %q, want %q", got, connecterrors.ErrNotFound)
 	}
 }
 
 func TestNewfUnknownCode(t *testing.T) {
-	err := connectgoerrors.Newf(connectgoerrors.ErrorCode("NONEXISTENT"), "msg %s", "val")
+	err := connecterrors.Newf(connecterrors.ErrorCode("NONEXISTENT"), "msg %s", "val")
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
 }
 
 func TestFromError(t *testing.T) {
-	connectErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"})
-	e, ok := connectgoerrors.FromError(connectErr)
+	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "123"})
+	e, ok := connecterrors.FromError(connectErr)
 	if !ok {
 		t.Fatal("expected FromError to find error")
 	}
-	if e.Code != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("Code = %q, want %q", e.Code, connectgoerrors.ErrNotFound)
+	if e.Code != string(connecterrors.ErrNotFound) {
+		t.Errorf("Code = %q, want %q", e.Code, connecterrors.ErrNotFound)
 	}
 	if e.ConnectCode != connect.CodeNotFound {
 		t.Errorf("ConnectCode = %v, want CodeNotFound", e.ConnectCode)
@@ -166,7 +166,7 @@ func TestFromError(t *testing.T) {
 }
 
 func TestFromErrorNil(t *testing.T) {
-	_, ok := connectgoerrors.FromError(nil)
+	_, ok := connecterrors.FromError(nil)
 	if ok {
 		t.Error("expected false for nil error")
 	}
@@ -174,35 +174,35 @@ func TestFromErrorNil(t *testing.T) {
 
 func TestFromErrorNoMeta(t *testing.T) {
 	connectErr := connect.NewError(connect.CodeInternal, errors.New("raw error"))
-	_, ok := connectgoerrors.FromError(connectErr)
+	_, ok := connecterrors.FromError(connectErr)
 	if ok {
 		t.Error("expected false for error without x-error-code meta")
 	}
 }
 
 func TestCodedErrorIs(t *testing.T) {
-	sentinel := connectgoerrors.NewCodedError(connectgoerrors.ErrNotFound)
-	connectErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "1"})
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
+	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "1"})
 
 	if !errors.Is(connectErr.Unwrap(), sentinel) {
 		t.Error("expected errors.Is to match by code")
 	}
 
-	other := connectgoerrors.NewCodedError(connectgoerrors.ErrInternal)
+	other := connecterrors.NewCodedError(connecterrors.ErrInternal)
 	if errors.Is(connectErr.Unwrap(), other) {
 		t.Error("should not match different code")
 	}
 }
 
 func TestCodedErrorAs(t *testing.T) {
-	connectErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "42"})
+	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "42"})
 
-	var coded *connectgoerrors.CodedError
+	var coded *connecterrors.CodedError
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError")
 	}
-	if coded.ErrorCode() != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connectgoerrors.ErrNotFound)
+	if coded.ErrorCode() != string(connecterrors.ErrNotFound) {
+		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connecterrors.ErrNotFound)
 	}
 	if !strings.Contains(coded.Error(), "42") {
 		t.Errorf("Error() = %q, should contain '42'", coded.Error())
@@ -211,9 +211,9 @@ func TestCodedErrorAs(t *testing.T) {
 
 func TestWrapCodedError(t *testing.T) {
 	orig := errors.New("db connection lost")
-	connectErr := connectgoerrors.Wrap(connectgoerrors.ErrInternal, orig, connectgoerrors.M{})
+	connectErr := connecterrors.Wrap(connecterrors.ErrInternal, orig, connecterrors.M{})
 
-	sentinel := connectgoerrors.NewCodedError(connectgoerrors.ErrInternal)
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrInternal)
 	if !errors.Is(connectErr.Unwrap(), sentinel) {
 		t.Error("expected Wrap result to match sentinel via errors.Is")
 	}
@@ -225,30 +225,30 @@ func TestWrapCodedError(t *testing.T) {
 }
 
 func TestNewfCodedError(t *testing.T) {
-	connectErr := connectgoerrors.Newf(connectgoerrors.ErrNotFound, "user %s gone", "alice")
-	sentinel := connectgoerrors.NewCodedError(connectgoerrors.ErrNotFound)
+	connectErr := connecterrors.Newf(connecterrors.ErrNotFound, "user %s gone", "alice")
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
 
 	if !errors.Is(connectErr.Unwrap(), sentinel) {
 		t.Error("expected Newf result to match sentinel via errors.Is")
 	}
 
-	var coded *connectgoerrors.CodedError
+	var coded *connecterrors.CodedError
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError from Newf result")
 	}
-	if coded.ErrorCode() != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connectgoerrors.ErrNotFound)
+	if coded.ErrorCode() != string(connecterrors.ErrNotFound) {
+		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connecterrors.ErrNotFound)
 	}
 }
 
 func TestWithDetails(t *testing.T) {
-	connectErr := connectgoerrors.New(connectgoerrors.ErrInvalidArgument, connectgoerrors.M{"reason": "bad"})
+	connectErr := connecterrors.New(connecterrors.ErrInvalidArgument, connecterrors.M{"reason": "bad"})
 	if len(connectErr.Details()) != 0 {
 		t.Fatal("expected no details initially")
 	}
 
 	// WithDetails with nil should not panic
-	result := connectgoerrors.WithDetails(connectErr, nil)
+	result := connecterrors.WithDetails(connectErr, nil)
 	if result != connectErr {
 		t.Error("expected same error returned for chaining")
 	}
@@ -258,18 +258,18 @@ func TestWithDetails(t *testing.T) {
 }
 
 func TestExtractErrorCode(t *testing.T) {
-	connectErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "1"})
-	code, ok := connectgoerrors.ExtractErrorCode(connectErr)
+	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "1"})
+	code, ok := connecterrors.ExtractErrorCode(connectErr)
 	if !ok {
 		t.Fatal("expected ErrorCode to return true")
 	}
-	if code != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("code = %q, want %q", code, connectgoerrors.ErrNotFound)
+	if code != string(connecterrors.ErrNotFound) {
+		t.Errorf("code = %q, want %q", code, connecterrors.ErrNotFound)
 	}
 }
 
 func TestExtractErrorCodeNil(t *testing.T) {
-	_, ok := connectgoerrors.ExtractErrorCode(nil)
+	_, ok := connecterrors.ExtractErrorCode(nil)
 	if ok {
 		t.Error("expected false for nil")
 	}
@@ -277,7 +277,7 @@ func TestExtractErrorCodeNil(t *testing.T) {
 
 func TestExtractErrorCodeNoMeta(t *testing.T) {
 	connectErr := connect.NewError(connect.CodeInternal, errors.New("raw"))
-	_, ok := connectgoerrors.ExtractErrorCode(connectErr)
+	_, ok := connecterrors.ExtractErrorCode(connectErr)
 	if ok {
 		t.Error("expected false for error without x-error-code")
 	}
@@ -285,30 +285,30 @@ func TestExtractErrorCodeNoMeta(t *testing.T) {
 
 func TestNewWithCodedError(t *testing.T) {
 	// Create a sentinel error (simulating generated code)
-	sentinel := connectgoerrors.NewCodedError(connectgoerrors.ErrNotFound)
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
 
 	// Use sentinel with New() - this is the new feature
-	err := connectgoerrors.New(sentinel, connectgoerrors.M{"id": "123"})
+	err := connecterrors.New(sentinel, connecterrors.M{"id": "123"})
 	if err.Code() != connect.CodeNotFound {
 		t.Errorf("Code() = %v, want CodeNotFound", err.Code())
 	}
-	if got := err.Meta().Get("x-error-code"); got != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("x-error-code = %q, want %q", got, connectgoerrors.ErrNotFound)
+	if got := err.Meta().Get("x-error-code"); got != string(connecterrors.ErrNotFound) {
+		t.Errorf("x-error-code = %q, want %q", got, connecterrors.ErrNotFound)
 	}
 }
 
 func TestNewWithNilCode(t *testing.T) {
 	// Passing nil should not panic, should return Internal error
-	err := connectgoerrors.New(nil, nil)
+	err := connecterrors.New(nil, nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("Code() = %v, want CodeInternal for nil code", err.Code())
 	}
 }
 
 func TestWrapWithCodedError(t *testing.T) {
-	sentinel := connectgoerrors.NewCodedError(connectgoerrors.ErrInternal)
+	sentinel := connecterrors.NewCodedError(connecterrors.ErrInternal)
 	orig := errors.New("db error")
-	err := connectgoerrors.Wrap(sentinel, orig, connectgoerrors.M{})
+	err := connecterrors.Wrap(sentinel, orig, connecterrors.M{})
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("Code() = %v, want CodeInternal", err.Code())
 	}
@@ -317,16 +317,16 @@ func TestWrapWithCodedError(t *testing.T) {
 func TestSetHeaderKeys(t *testing.T) {
 	// Restore default keys after test
 	defer func() {
-		connectgoerrors.SetHeaderKeys("x-error-code", "x-retryable")
+		connecterrors.SetHeaderKeys("x-error-code", "x-retryable")
 	}()
 
-	connectgoerrors.SetHeaderKeys("x-custom-code", "x-custom-retry")
+	connecterrors.SetHeaderKeys("x-custom-code", "x-custom-retry")
 
-	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"})
+	err := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "123"})
 	meta := err.Meta()
 
-	if meta.Get("x-custom-code") != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("expected x-custom-code header to be %s, got %s", connectgoerrors.ErrNotFound, meta.Get("x-custom-code"))
+	if meta.Get("x-custom-code") != string(connecterrors.ErrNotFound) {
+		t.Errorf("expected x-custom-code header to be %s, got %s", connecterrors.ErrNotFound, meta.Get("x-custom-code"))
 	}
 
 	if meta.Get("x-error-code") != "" {
@@ -335,38 +335,38 @@ func TestSetHeaderKeys(t *testing.T) {
 }
 
 // isErrorCode simulates the generated IsXxx pattern for testing.
-func isErrorCode(err error, code connectgoerrors.ErrorCode) bool {
+func isErrorCode(err error, code connecterrors.ErrorCode) bool {
 	var connectErr *connect.Error
 	if !errors.As(err, &connectErr) {
 		return false
 	}
-	c, ok := connectgoerrors.ExtractErrorCode(connectErr)
+	c, ok := connecterrors.ExtractErrorCode(connectErr)
 	return ok && c == string(code)
 }
 
 func TestIsXxxPatternMatch(t *testing.T) {
-	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "42"})
-	if !isErrorCode(err, connectgoerrors.ErrNotFound) {
+	err := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "42"})
+	if !isErrorCode(err, connecterrors.ErrNotFound) {
 		t.Error("expected IsNotFound to match")
 	}
 }
 
 func TestIsXxxPatternNoMatch(t *testing.T) {
-	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "42"})
-	if isErrorCode(err, connectgoerrors.ErrInternal) {
+	err := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "42"})
+	if isErrorCode(err, connecterrors.ErrInternal) {
 		t.Error("expected IsInternal to NOT match a NotFound error")
 	}
 }
 
 func TestIsXxxPatternNilError(t *testing.T) {
-	if isErrorCode(nil, connectgoerrors.ErrNotFound) {
+	if isErrorCode(nil, connecterrors.ErrNotFound) {
 		t.Error("expected false for nil error")
 	}
 }
 
 func TestIsXxxPatternNonConnectError(t *testing.T) {
 	plainErr := errors.New("some random error")
-	if isErrorCode(plainErr, connectgoerrors.ErrNotFound) {
+	if isErrorCode(plainErr, connecterrors.ErrNotFound) {
 		t.Error("expected false for non-connect error")
 	}
 }
@@ -374,7 +374,7 @@ func TestIsXxxPatternNonConnectError(t *testing.T) {
 func TestIsXxxPatternRawConnectError(t *testing.T) {
 	// A raw *connect.Error without x-error-code metadata
 	rawErr := connect.NewError(connect.CodeNotFound, errors.New("not found"))
-	if isErrorCode(rawErr, connectgoerrors.ErrNotFound) {
+	if isErrorCode(rawErr, connecterrors.ErrNotFound) {
 		t.Error("expected false for connect error without x-error-code metadata")
 	}
 }

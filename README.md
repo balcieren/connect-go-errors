@@ -11,7 +11,7 @@ A proto-first error handling package for [Connect RPC](https://connectrpc.com). 
 
 ```protobuf
 // Define in your .proto file
-option (connectgoerrors.v1.error) = {
+option (connecterrors.v1.error) = {
   code: "ERROR_USER_NOT_FOUND"
   message: "User '{{id}}' not found"
   connect_code: "not_found"
@@ -93,27 +93,27 @@ buf dep update
 
 Errors can be defined at **two levels**:
 
-- **File-level** (`connectgoerrors.v1.error`) — shared across all services, defined once
-- **Method-level** (`connectgoerrors.v1.connect_error`) — specific to a single RPC
+- **File-level** (`connecterrors.v1.error`) — shared across all services, defined once
+- **Method-level** (`connecterrors.v1.connect_error`) — specific to a single RPC
 
 ```protobuf
 syntax = "proto3";
 package user.v1;
 
-import "connectgoerrors/v1/error.proto";
+import "connecterrors/v1/error.proto";
 
 // ── File-level: shared errors, defined once ──────────────────
-option (connectgoerrors.v1.error) = {
+option (connecterrors.v1.error) = {
   code: "ERROR_USER_NOT_FOUND"
   message: "User '{{id}}' not found"
   connect_code: "not_found"
 };
-option (connectgoerrors.v1.error) = {
+option (connecterrors.v1.error) = {
   code: "ERROR_UNAUTHORIZED"
   message: "Authentication required"
   connect_code: "unauthenticated"
 };
-option (connectgoerrors.v1.error) = {
+option (connecterrors.v1.error) = {
   code: "ERROR_RATE_LIMITED"
   message: "Too many requests, try again later"
   connect_code: "resource_exhausted"
@@ -123,7 +123,7 @@ option (connectgoerrors.v1.error) = {
 service UserService {
   rpc GetUser(GetUserRequest) returns (User) {
     // Method-level: only for this RPC
-    option (connectgoerrors.v1.connect_error) = {
+    option (connecterrors.v1.connect_error) = {
       code: "ERROR_INVALID_USER_ID"
       message: "Invalid user ID: '{{id}}'"
       connect_code: "invalid_argument"
@@ -131,7 +131,7 @@ service UserService {
   };
 
   rpc DeleteUser(DeleteUserRequest) returns (Empty) {
-    option (connectgoerrors.v1.connect_error) = {
+    option (connecterrors.v1.connect_error) = {
       code: "ERROR_DELETE_FORBIDDEN"
       message: "Cannot delete user: {{reason}}"
       connect_code: "permission_denied"
@@ -139,7 +139,7 @@ service UserService {
   };
 
   rpc CreateUser(CreateUserRequest) returns (User) {
-    option (connectgoerrors.v1.connect_error) = {
+    option (connecterrors.v1.connect_error) = {
       code: "ERROR_EMAIL_EXISTS"
       message: "Email '{{email}}' is already registered"
       connect_code: "already_exists"

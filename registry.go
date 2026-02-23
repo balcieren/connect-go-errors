@@ -1,4 +1,4 @@
-package connectgoerrors
+package connecterrors
 
 import (
 	"fmt"
@@ -182,7 +182,7 @@ var defaultErrors = map[string]Error{
 //
 // Example:
 //
-//	connectgoerrors.Register(connectgoerrors.Error{
+//	connecterrors.Register(connecterrors.Error{
 //	    Code:        "ERROR_CUSTOM",
 //	    MessageTpl:  "Custom error: {{detail}}",
 //	    ConnectCode: connect.CodeInternal,
@@ -221,7 +221,7 @@ func RegisterAll(errs []Error) {
 //
 // Example:
 //
-//	e, ok := connectgoerrors.Lookup(connectgoerrors.ErrNotFound)
+//	e, ok := connecterrors.Lookup(connecterrors.ErrNotFound)
 func Lookup(code ErrorCode) (Error, bool) {
 	m := loadRegistry()
 	e, ok := m[string(code)]
@@ -233,7 +233,7 @@ func Lookup(code ErrorCode) (Error, bool) {
 func MustLookup(code ErrorCode) Error {
 	e, ok := Lookup(code)
 	if !ok {
-		panic(fmt.Sprintf("connectgoerrors: unknown error code %q", code))
+		panic(fmt.Sprintf("connecterrors: unknown error code %q", code))
 	}
 	return e
 }
