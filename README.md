@@ -14,7 +14,7 @@ A proto-first error handling package for [Connect RPC](https://connectrpc.com). 
 option (connecterrors.v1.error) = {
   code: "ERROR_USER_NOT_FOUND"
   message: "User '{{id}}' not found"
-  connect_code: "not_found"
+  connect_code: CODE_NOT_FOUND
 };
 ```
 
@@ -352,7 +352,7 @@ const ErrEmailTaken cerr.ErrorCode = "ERROR_EMAIL_TAKEN"
 
 func init() {
     cerr.Register(cerr.Error{
-        Code:        string(ErrEmailTaken),
+        Code:        ErrEmailTaken,
         MessageTpl:  "Email '{{email}}' is taken",
         ConnectCode: connect.CodeAlreadyExists,
     })
