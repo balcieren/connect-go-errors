@@ -20,10 +20,8 @@ make test
 - `error.go` - Main API: `New()`, `NewWithMessage()`, `FromCode()`, `Wrap()`
 - `registry.go` - Error definitions and constants
 - `template.go` - Template parsing and substitution
-- `proto/connect/error.proto` - Proto extension definition
+- `proto/connecterrors/v1/error.proto` - Proto extension definition
 - `cmd/protoc-gen-connect-errors/` - Protoc plugin
-- `internal/codegen/` - Code generation templates
-- `internal/parser/` - Proto parsing utilities
 - `examples/` - Usage examples
 
 ## Running Tests
