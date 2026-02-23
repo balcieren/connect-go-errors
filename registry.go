@@ -63,7 +63,7 @@ const (
 // It maps a semantic error code to a Connect status code and message template.
 type Error struct {
 	// Code is the unique error identifier (e.g. "ERROR_NOT_FOUND").
-	Code string
+	Code ErrorCode
 
 	// MessageTpl is a message template with {{placeholder}} syntax.
 	MessageTpl string
@@ -78,99 +78,99 @@ type Error struct {
 // writeMu protects Registry writes. Reads are lock-free via atomic.Value.
 var writeMu sync.Mutex
 
-// registryVal stores an immutable map[string]Error snapshot.
+// registryVal stores an immutable map[ErrorCode]Error snapshot.
 // Reads are lock-free (atomic load). Writes copy-on-write under writeMu.
 var registryVal atomic.Value
 
 // defaultErrors is the default error definitions. This is used to initialize registryVal.
 // After init, use Lookup/Register/RegisterAll to interact with the registry.
-var defaultErrors = map[string]Error{
-	string(ErrNotFound): {
-		Code:        string(ErrNotFound),
+var defaultErrors = map[ErrorCode]Error{
+	ErrNotFound: {
+		Code:        ErrNotFound,
 		MessageTpl:  "Resource '{{id}}' not found",
 		ConnectCode: connect.CodeNotFound,
 		Retryable:   false,
 	},
-	string(ErrInvalidArgument): {
-		Code:        string(ErrInvalidArgument),
+	ErrInvalidArgument: {
+		Code:        ErrInvalidArgument,
 		MessageTpl:  "Invalid argument: {{reason}}",
 		ConnectCode: connect.CodeInvalidArgument,
 		Retryable:   false,
 	},
-	string(ErrAlreadyExists): {
-		Code:        string(ErrAlreadyExists),
+	ErrAlreadyExists: {
+		Code:        ErrAlreadyExists,
 		MessageTpl:  "Resource '{{id}}' already exists",
 		ConnectCode: connect.CodeAlreadyExists,
 		Retryable:   false,
 	},
-	string(ErrPermissionDenied): {
-		Code:        string(ErrPermissionDenied),
+	ErrPermissionDenied: {
+		Code:        ErrPermissionDenied,
 		MessageTpl:  "Permission denied: {{reason}}",
 		ConnectCode: connect.CodePermissionDenied,
 		Retryable:   false,
 	},
-	string(ErrUnauthenticated): {
-		Code:        string(ErrUnauthenticated),
+	ErrUnauthenticated: {
+		Code:        ErrUnauthenticated,
 		MessageTpl:  "Authentication required",
 		ConnectCode: connect.CodeUnauthenticated,
 		Retryable:   false,
 	},
-	string(ErrInternal): {
-		Code:        string(ErrInternal),
+	ErrInternal: {
+		Code:        ErrInternal,
 		MessageTpl:  "Internal server error",
 		ConnectCode: connect.CodeInternal,
 		Retryable:   false,
 	},
-	string(ErrUnavailable): {
-		Code:        string(ErrUnavailable),
+	ErrUnavailable: {
+		Code:        ErrUnavailable,
 		MessageTpl:  "Service temporarily unavailable",
 		ConnectCode: connect.CodeUnavailable,
 		Retryable:   true,
 	},
-	string(ErrDeadlineExceeded): {
-		Code:        string(ErrDeadlineExceeded),
+	ErrDeadlineExceeded: {
+		Code:        ErrDeadlineExceeded,
 		MessageTpl:  "Request timed out",
 		ConnectCode: connect.CodeDeadlineExceeded,
 		Retryable:   true,
 	},
-	string(ErrResourceExhausted): {
-		Code:        string(ErrResourceExhausted),
+	ErrResourceExhausted: {
+		Code:        ErrResourceExhausted,
 		MessageTpl:  "Resource exhausted: {{reason}}",
 		ConnectCode: connect.CodeResourceExhausted,
 		Retryable:   true,
 	},
-	string(ErrFailedPrecondition): {
-		Code:        string(ErrFailedPrecondition),
+	ErrFailedPrecondition: {
+		Code:        ErrFailedPrecondition,
 		MessageTpl:  "Failed precondition: {{reason}}",
 		ConnectCode: connect.CodeFailedPrecondition,
 		Retryable:   false,
 	},
-	string(ErrAborted): {
-		Code:        string(ErrAborted),
+	ErrAborted: {
+		Code:        ErrAborted,
 		MessageTpl:  "Operation aborted: {{reason}}",
 		ConnectCode: connect.CodeAborted,
 		Retryable:   true,
 	},
-	string(ErrOutOfRange): {
-		Code:        string(ErrOutOfRange),
+	ErrOutOfRange: {
+		Code:        ErrOutOfRange,
 		MessageTpl:  "Value out of range: {{reason}}",
 		ConnectCode: connect.CodeOutOfRange,
 		Retryable:   false,
 	},
-	string(ErrUnimplemented): {
-		Code:        string(ErrUnimplemented),
+	ErrUnimplemented: {
+		Code:        ErrUnimplemented,
 		MessageTpl:  "Operation not implemented",
 		ConnectCode: connect.CodeUnimplemented,
 		Retryable:   false,
 	},
-	string(ErrCanceled): {
-		Code:        string(ErrCanceled),
+	ErrCanceled: {
+		Code:        ErrCanceled,
 		MessageTpl:  "Operation canceled",
 		ConnectCode: connect.CodeCanceled,
 		Retryable:   false,
 	},
-	string(ErrDataLoss): {
-		Code:        string(ErrDataLoss),
+	ErrDataLoss: {
+		Code:        ErrDataLoss,
 		MessageTpl:  "Unrecoverable data loss",
 		ConnectCode: connect.CodeDataLoss,
 		Retryable:   false,
@@ -192,7 +192,7 @@ func Register(err Error) {
 	writeMu.Lock()
 	defer writeMu.Unlock()
 	current := loadRegistry()
-	updated := make(map[string]Error, len(current)+1)
+	updated := make(map[ErrorCode]Error, len(current)+1)
 	for k, v := range current {
 		updated[k] = v
 	}
@@ -206,7 +206,7 @@ func RegisterAll(errs []Error) {
 	writeMu.Lock()
 	defer writeMu.Unlock()
 	current := loadRegistry()
-	updated := make(map[string]Error, len(current)+len(errs))
+	updated := make(map[ErrorCode]Error, len(current)+len(errs))
 	for k, v := range current {
 		updated[k] = v
 	}
@@ -224,7 +224,7 @@ func RegisterAll(errs []Error) {
 //	e, ok := connecterrors.Lookup(connecterrors.ErrNotFound)
 func Lookup(code ErrorCode) (Error, bool) {
 	m := loadRegistry()
-	e, ok := m[string(code)]
+	e, ok := m[code]
 	return e, ok
 }
 
@@ -244,19 +244,19 @@ func Codes() []string {
 	m := loadRegistry()
 	codes := make([]string, 0, len(m))
 	for k := range m {
-		codes = append(codes, k)
+		codes = append(codes, string(k))
 	}
 	sort.Strings(codes)
 	return codes
 }
 
 // loadRegistry returns the current immutable registry snapshot.
-func loadRegistry() map[string]Error {
+func loadRegistry() map[ErrorCode]Error {
 	v := registryVal.Load()
 	if v == nil {
 		return nil
 	}
-	return v.(map[string]Error)
+	return v.(map[ErrorCode]Error)
 }
 
 func init() {

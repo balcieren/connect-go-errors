@@ -157,7 +157,7 @@ func TestFromError(t *testing.T) {
 	if !ok {
 		t.Fatal("expected FromError to find error")
 	}
-	if e.Code != string(connecterrors.ErrNotFound) {
+	if e.Code != connecterrors.ErrNotFound {
 		t.Errorf("Code = %q, want %q", e.Code, connecterrors.ErrNotFound)
 	}
 	if e.ConnectCode != connect.CodeNotFound {
@@ -201,8 +201,8 @@ func TestCodedErrorAs(t *testing.T) {
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError")
 	}
-	if coded.ErrorCode() != string(connecterrors.ErrNotFound) {
-		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connecterrors.ErrNotFound)
+	if coded.Code() != string(connecterrors.ErrNotFound) {
+		t.Errorf("Code() = %q, want %q", coded.Code(), connecterrors.ErrNotFound)
 	}
 	if !strings.Contains(coded.Error(), "42") {
 		t.Errorf("Error() = %q, should contain '42'", coded.Error())
@@ -236,8 +236,8 @@ func TestNewfCodedError(t *testing.T) {
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError from Newf result")
 	}
-	if coded.ErrorCode() != string(connecterrors.ErrNotFound) {
-		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connecterrors.ErrNotFound)
+	if coded.Code() != string(connecterrors.ErrNotFound) {
+		t.Errorf("Code() = %q, want %q", coded.Code(), connecterrors.ErrNotFound)
 	}
 }
 

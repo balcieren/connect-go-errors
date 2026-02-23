@@ -76,7 +76,7 @@ func SetHeaderKeys(errorCodeKey, retryableKey string) {
 // setMeta attaches error code and retryable metadata to a Connect error.
 func setMeta(connectErr *connect.Error, e Error) {
 	hk := getHeaderKeys()
-	connectErr.Meta().Set(hk.errorCode, e.Code)
+	connectErr.Meta().Set(hk.errorCode, string(e.Code))
 	if e.Retryable {
 		connectErr.Meta().Set(hk.retryable, "true")
 	} else {

@@ -34,7 +34,7 @@ func TestRegistryDefaultEntries(t *testing.T) {
 			if !ok {
 				t.Fatalf("Lookup(%q) not found", code)
 			}
-			if e.Code != string(code) {
+			if e.Code != code {
 				t.Errorf("Code = %q, want %q", e.Code, code)
 			}
 			if e.MessageTpl == "" {
@@ -131,7 +131,7 @@ func TestMustLookupPanic(t *testing.T) {
 
 func TestMustLookupSuccess(t *testing.T) {
 	e := connecterrors.MustLookup(connecterrors.ErrNotFound)
-	if e.Code != string(connecterrors.ErrNotFound) {
+	if e.Code != connecterrors.ErrNotFound {
 		t.Errorf("Code = %q", e.Code)
 	}
 }
@@ -161,8 +161,8 @@ func TestCodes(t *testing.T) {
 	for _, c := range codes {
 		found[c] = true
 	}
-	for _, want := range []string{string(connecterrors.ErrNotFound), string(connecterrors.ErrInternal), string(connecterrors.ErrCanceled)} {
-		if !found[want] {
+	for _, want := range []connecterrors.ErrorCode{connecterrors.ErrNotFound, connecterrors.ErrInternal, connecterrors.ErrCanceled} {
+		if !found[string(want)] {
 			t.Errorf("expected code %q in Codes()", want)
 		}
 	}
@@ -182,7 +182,7 @@ func TestConcurrentRegistration(t *testing.T) {
 			for j := 0; j < numOps; j++ {
 				code := fmt.Sprintf("ERR_CONCURRENT_%d_%d", id, j)
 				connecterrors.Register(connecterrors.Error{
-					Code:        code,
+					Code:        connecterrors.ErrorCode(code),
 					MessageTpl:  "Concurrent error",
 					ConnectCode: connect.CodeInternal,
 				})

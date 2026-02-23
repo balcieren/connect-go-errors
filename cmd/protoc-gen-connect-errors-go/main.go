@@ -155,7 +155,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	for _, e := range errors {
 		constName := "Err" + errorCodeToConstant(e.Code)
 		g.P("\t\t{")
-		g.P(fmt.Sprintf("\t\t\tCode:        string(%s),", constName))
+		g.P(fmt.Sprintf("\t\t\tCode:        %s,", constName))
 		g.P(fmt.Sprintf("\t\t\tMessageTpl:  %q,", e.Message))
 		g.P(fmt.Sprintf("\t\t\tConnectCode: %s,", mapConnectCode(e.ConnectCode)))
 		g.P(fmt.Sprintf("\t\t\tRetryable:   %t,", e.Retryable))

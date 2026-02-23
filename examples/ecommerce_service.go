@@ -17,19 +17,19 @@ const (
 func init() {
 	cerr.RegisterAll([]cerr.Error{
 		{
-			Code:        string(ErrOutOfStock),
+			Code:        ErrOutOfStock,
 			MessageTpl:  "Product '{{product_id}}' is out of stock",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        string(ErrCartLimit),
+			Code:        ErrCartLimit,
 			MessageTpl:  "Cart limit exceeded: maximum {{max}} items allowed",
 			ConnectCode: connect.CodeResourceExhausted,
 			Retryable:   false,
 		},
 		{
-			Code:        string(ErrShippingUnavailable),
+			Code:        ErrShippingUnavailable,
 			MessageTpl:  "Shipping to '{{region}}' is not available",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,

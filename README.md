@@ -106,17 +106,17 @@ import "connecterrors/v1/error.proto";
 option (connecterrors.v1.error) = {
   code: "ERROR_USER_NOT_FOUND"
   message: "User '{{id}}' not found"
-  connect_code: "not_found"
+  connect_code: CODE_NOT_FOUND
 };
 option (connecterrors.v1.error) = {
   code: "ERROR_UNAUTHORIZED"
   message: "Authentication required"
-  connect_code: "unauthenticated"
+  connect_code: CODE_UNAUTHENTICATED
 };
 option (connecterrors.v1.error) = {
   code: "ERROR_RATE_LIMITED"
   message: "Too many requests, try again later"
-  connect_code: "resource_exhausted"
+  connect_code: CODE_RESOURCE_EXHAUSTED
   retryable: true
 };
 
@@ -126,7 +126,7 @@ service UserService {
     option (connecterrors.v1.connect_error) = {
       code: "ERROR_INVALID_USER_ID"
       message: "Invalid user ID: '{{id}}'"
-      connect_code: "invalid_argument"
+      connect_code: CODE_INVALID_ARGUMENT
     };
   };
 
@@ -134,7 +134,7 @@ service UserService {
     option (connecterrors.v1.connect_error) = {
       code: "ERROR_DELETE_FORBIDDEN"
       message: "Cannot delete user: {{reason}}"
-      connect_code: "permission_denied"
+      connect_code: CODE_PERMISSION_DENIED
     };
   };
 
@@ -142,7 +142,7 @@ service UserService {
     option (connecterrors.v1.connect_error) = {
       code: "ERROR_EMAIL_EXISTS"
       message: "Email '{{email}}' is already registered"
-      connect_code: "already_exists"
+      connect_code: CODE_ALREADY_EXISTS
     };
   };
 }

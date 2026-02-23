@@ -18,19 +18,19 @@ const (
 func init() {
 	cerr.RegisterAll([]cerr.Error{
 		{
-			Code:        string(ErrInsufficientFunds),
+			Code:        ErrInsufficientFunds,
 			MessageTpl:  "Insufficient funds: requested {{amount}}, available {{balance}}",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        string(ErrCardDeclined),
+			Code:        ErrCardDeclined,
 			MessageTpl:  "Card ending in {{last4}} was declined: {{reason}}",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        string(ErrPaymentTimeout),
+			Code:        ErrPaymentTimeout,
 			MessageTpl:  "Payment processing timed out for order '{{order_id}}'",
 			ConnectCode: connect.CodeDeadlineExceeded,
 			Retryable:   true,
