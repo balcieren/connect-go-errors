@@ -31,3 +31,6 @@ Thumbs.db
 # Build artifacts (binary only, not the source directory)
 /protoc-gen-connect-errors
 cmd/protoc-gen-connect-errors/protoc-gen-connect-errors
+
+# Prompts
+PROMPTS.md
