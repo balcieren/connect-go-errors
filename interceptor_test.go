@@ -33,7 +33,7 @@ func TestErrorInterceptor(t *testing.T) {
 	if capturedErr == nil {
 		t.Fatal("expected interceptor callback to be invoked")
 	}
-	if captured.Code != connectgoerrors.ErrNotFound {
+	if captured.Code != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("captured code = %q, want %q", captured.Code, connectgoerrors.ErrNotFound)
 	}
 }

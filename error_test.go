@@ -13,7 +13,7 @@ import (
 func TestNew(t *testing.T) {
 	tests := []struct {
 		name        string
-		code        string
+		code        connectgoerrors.ErrorCode
 		data        connectgoerrors.M
 		wantCode    connect.Code
 		wantContain string
@@ -36,7 +36,7 @@ func TestNew(t *testing.T) {
 			if !strings.Contains(err.Error(), tt.wantContain) {
 				t.Errorf("Error() = %q, should contain %q", err.Error(), tt.wantContain)
 			}
-			if got := err.Meta().Get("x-error-code"); got != tt.code {
+			if got := err.Meta().Get("x-error-code"); got != string(tt.code) {
 				t.Errorf("x-error-code = %q, want %q", got, tt.code)
 			}
 		})
@@ -44,7 +44,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewUnknownCode(t *testing.T) {
-	err := connectgoerrors.New("NONEXISTENT", nil)
+	err := connectgoerrors.New(connectgoerrors.ErrorCode("NONEXISTENT"), nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
@@ -72,7 +72,7 @@ func TestNewWithMessage(t *testing.T) {
 }
 
 func TestNewWithMessageUnknownCode(t *testing.T) {
-	err := connectgoerrors.NewWithMessage("NONEXISTENT", "msg", nil)
+	err := connectgoerrors.NewWithMessage(connectgoerrors.ErrorCode("NONEXISTENT"), "msg", nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
@@ -104,7 +104,7 @@ func TestWrap(t *testing.T) {
 }
 
 func TestWrapUnknownCode(t *testing.T) {
-	err := connectgoerrors.Wrap("NONEXISTENT", errors.New("fail"), nil)
+	err := connectgoerrors.Wrap(connectgoerrors.ErrorCode("NONEXISTENT"), errors.New("fail"), nil)
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
@@ -117,7 +117,7 @@ func TestIsRetryable(t *testing.T) {
 	if connectgoerrors.IsRetryable(connectgoerrors.ErrNotFound) {
 		t.Error("NotFound should not be retryable")
 	}
-	if connectgoerrors.IsRetryable("NONEXISTENT") {
+	if connectgoerrors.IsRetryable(connectgoerrors.ErrorCode("NONEXISTENT")) {
 		t.Error("unknown should not be retryable")
 	}
 }
@@ -126,7 +126,7 @@ func TestConnectCode(t *testing.T) {
 	if got := connectgoerrors.ConnectCode(connectgoerrors.ErrNotFound); got != connect.CodeNotFound {
 		t.Errorf("got %v, want CodeNotFound", got)
 	}
-	if got := connectgoerrors.ConnectCode("NONEXISTENT"); got != connect.CodeInternal {
+	if got := connectgoerrors.ConnectCode(connectgoerrors.ErrorCode("NONEXISTENT")); got != connect.CodeInternal {
 		t.Errorf("got %v, want CodeInternal", got)
 	}
 }
@@ -139,13 +139,13 @@ func TestNewf(t *testing.T) {
 	if !strings.Contains(err.Error(), `User "alice" not found in org acme`) {
 		t.Errorf("Error() = %q, should contain formatted message", err.Error())
 	}
-	if got := err.Meta().Get("x-error-code"); got != connectgoerrors.ErrNotFound {
+	if got := err.Meta().Get("x-error-code"); got != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("x-error-code = %q, want %q", got, connectgoerrors.ErrNotFound)
 	}
 }
 
 func TestNewfUnknownCode(t *testing.T) {
-	err := connectgoerrors.Newf("NONEXISTENT", "msg %s", "val")
+	err := connectgoerrors.Newf(connectgoerrors.ErrorCode("NONEXISTENT"), "msg %s", "val")
 	if err.Code() != connect.CodeInternal {
 		t.Errorf("expected CodeInternal, got %v", err.Code())
 	}
@@ -157,7 +157,7 @@ func TestFromError(t *testing.T) {
 	if !ok {
 		t.Fatal("expected FromError to find error")
 	}
-	if e.Code != connectgoerrors.ErrNotFound {
+	if e.Code != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("Code = %q, want %q", e.Code, connectgoerrors.ErrNotFound)
 	}
 	if e.ConnectCode != connect.CodeNotFound {
@@ -201,7 +201,7 @@ func TestCodedErrorAs(t *testing.T) {
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError")
 	}
-	if coded.ErrorCode() != connectgoerrors.ErrNotFound {
+	if coded.ErrorCode() != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connectgoerrors.ErrNotFound)
 	}
 	if !strings.Contains(coded.Error(), "42") {
@@ -236,7 +236,7 @@ func TestNewfCodedError(t *testing.T) {
 	if !errors.As(connectErr.Unwrap(), &coded) {
 		t.Fatal("expected errors.As to extract CodedError from Newf result")
 	}
-	if coded.ErrorCode() != connectgoerrors.ErrNotFound {
+	if coded.ErrorCode() != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connectgoerrors.ErrNotFound)
 	}
 }
@@ -257,27 +257,27 @@ func TestWithDetails(t *testing.T) {
 	}
 }
 
-func TestErrorCode(t *testing.T) {
+func TestExtractErrorCode(t *testing.T) {
 	connectErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "1"})
-	code, ok := connectgoerrors.ErrorCode(connectErr)
+	code, ok := connectgoerrors.ExtractErrorCode(connectErr)
 	if !ok {
 		t.Fatal("expected ErrorCode to return true")
 	}
-	if code != connectgoerrors.ErrNotFound {
+	if code != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("code = %q, want %q", code, connectgoerrors.ErrNotFound)
 	}
 }
 
-func TestErrorCodeNil(t *testing.T) {
-	_, ok := connectgoerrors.ErrorCode(nil)
+func TestExtractErrorCodeNil(t *testing.T) {
+	_, ok := connectgoerrors.ExtractErrorCode(nil)
 	if ok {
 		t.Error("expected false for nil")
 	}
 }
 
-func TestErrorCodeNoMeta(t *testing.T) {
+func TestExtractErrorCodeNoMeta(t *testing.T) {
 	connectErr := connect.NewError(connect.CodeInternal, errors.New("raw"))
-	_, ok := connectgoerrors.ErrorCode(connectErr)
+	_, ok := connectgoerrors.ExtractErrorCode(connectErr)
 	if ok {
 		t.Error("expected false for error without x-error-code")
 	}
@@ -292,7 +292,7 @@ func TestNewWithCodedError(t *testing.T) {
 	if err.Code() != connect.CodeNotFound {
 		t.Errorf("Code() = %v, want CodeNotFound", err.Code())
 	}
-	if got := err.Meta().Get("x-error-code"); got != connectgoerrors.ErrNotFound {
+	if got := err.Meta().Get("x-error-code"); got != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("x-error-code = %q, want %q", got, connectgoerrors.ErrNotFound)
 	}
 }
@@ -325,11 +325,56 @@ func TestSetHeaderKeys(t *testing.T) {
 	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"})
 	meta := err.Meta()
 
-	if meta.Get("x-custom-code") != connectgoerrors.ErrNotFound {
+	if meta.Get("x-custom-code") != string(connectgoerrors.ErrNotFound) {
 		t.Errorf("expected x-custom-code header to be %s, got %s", connectgoerrors.ErrNotFound, meta.Get("x-custom-code"))
 	}
 
 	if meta.Get("x-error-code") != "" {
 		t.Errorf("expected x-error-code header to be empty, got %s", meta.Get("x-error-code"))
+	}
+}
+
+// isErrorCode simulates the generated IsXxx pattern for testing.
+func isErrorCode(err error, code connectgoerrors.ErrorCode) bool {
+	var connectErr *connect.Error
+	if !errors.As(err, &connectErr) {
+		return false
+	}
+	c, ok := connectgoerrors.ExtractErrorCode(connectErr)
+	return ok && c == string(code)
+}
+
+func TestIsXxxPatternMatch(t *testing.T) {
+	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "42"})
+	if !isErrorCode(err, connectgoerrors.ErrNotFound) {
+		t.Error("expected IsNotFound to match")
+	}
+}
+
+func TestIsXxxPatternNoMatch(t *testing.T) {
+	err := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "42"})
+	if isErrorCode(err, connectgoerrors.ErrInternal) {
+		t.Error("expected IsInternal to NOT match a NotFound error")
+	}
+}
+
+func TestIsXxxPatternNilError(t *testing.T) {
+	if isErrorCode(nil, connectgoerrors.ErrNotFound) {
+		t.Error("expected false for nil error")
+	}
+}
+
+func TestIsXxxPatternNonConnectError(t *testing.T) {
+	plainErr := errors.New("some random error")
+	if isErrorCode(plainErr, connectgoerrors.ErrNotFound) {
+		t.Error("expected false for non-connect error")
+	}
+}
+
+func TestIsXxxPatternRawConnectError(t *testing.T) {
+	// A raw *connect.Error without x-error-code metadata
+	rawErr := connect.NewError(connect.CodeNotFound, errors.New("not found"))
+	if isErrorCode(rawErr, connectgoerrors.ErrNotFound) {
+		t.Error("expected false for connect error without x-error-code metadata")
 	}
 }

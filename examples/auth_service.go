@@ -8,21 +8,27 @@ import (
 	cerr "github.com/balcieren/connect-go-errors"
 )
 
+const (
+	ErrInvalidCredentials cerr.ErrorCode = "ERROR_INVALID_CREDENTIALS"
+	ErrAccountLocked      cerr.ErrorCode = "ERROR_ACCOUNT_LOCKED"
+	ErrTokenExpired       cerr.ErrorCode = "ERROR_TOKEN_EXPIRED"
+)
+
 func init() {
 	cerr.Register(cerr.Error{
-		Code:        "ERROR_INVALID_CREDENTIALS",
+		Code:        string(ErrInvalidCredentials),
 		MessageTpl:  "Invalid credentials for user '{{email}}'",
 		ConnectCode: connect.CodeUnauthenticated,
 		Retryable:   false,
 	})
 	cerr.Register(cerr.Error{
-		Code:        "ERROR_ACCOUNT_LOCKED",
+		Code:        string(ErrAccountLocked),
 		MessageTpl:  "Account '{{email}}' is locked. Try again after {{unlock_at}}",
 		ConnectCode: connect.CodePermissionDenied,
 		Retryable:   false,
 	})
 	cerr.Register(cerr.Error{
-		Code:        "ERROR_TOKEN_EXPIRED",
+		Code:        string(ErrTokenExpired),
 		MessageTpl:  "Token expired at {{expired_at}}",
 		ConnectCode: connect.CodeUnauthenticated,
 		Retryable:   true,
@@ -42,7 +48,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 
 	// Simulate authentication check
 	if password != "correct" {
-		return "", cerr.New("ERROR_INVALID_CREDENTIALS", cerr.M{
+		return "", cerr.New(ErrInvalidCredentials, cerr.M{
 			"email": email,
 		})
 	}
@@ -59,7 +65,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, token string) (string, e
 	}
 
 	if token == "expired" {
-		return "", cerr.New("ERROR_TOKEN_EXPIRED", cerr.M{
+		return "", cerr.New(ErrTokenExpired, cerr.M{
 			"expired_at": "2026-01-01T00:00:00Z",
 		})
 	}
