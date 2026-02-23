@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-var version = "0.1.3"
+var version = "0.2.0"
 
 func main() {
 	showVersion := flag.Bool("version", false, "print version")
@@ -62,6 +62,19 @@ type errorDef struct {
 func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	var errors []errorDef
 
+	// Parse file-level error definitions (field number 50002)
+	fileOpts := file.Desc.Options()
+	if fileOpts != nil {
+		raw := fileOpts.(*descriptorpb.FileOptions)
+		if raw != nil {
+			if b, err := proto.Marshal(raw); err == nil {
+				defs := parseExtensionErrors(b, 50002)
+				errors = append(errors, defs...)
+			}
+		}
+	}
+
+	// Parse method-level error definitions (field number 50001)
 	for _, svc := range file.Services {
 		for _, method := range svc.Methods {
 			opts := method.Desc.Options()
@@ -69,20 +82,17 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 				continue
 			}
 
-			// Look for connect_error extensions (field number 50001)
 			raw := opts.(*descriptorpb.MethodOptions)
 			if raw == nil {
 				continue
 			}
 
-			// Parse extensions from unknown fields
 			b, err := proto.Marshal(raw)
 			if err != nil {
 				continue
 			}
 
-			// Walk the wire-format bytes looking for field 50001 (connect_error extension)
-			defs := parseConnectErrors(b)
+			defs := parseExtensionErrors(b, 50001)
 			errors = append(errors, defs...)
 		}
 	}
@@ -110,18 +120,31 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P("package ", file.GoPackageName)
 	g.P()
 	g.P("import (")
+	g.P(`	"errors"`)
+	g.P()
 	g.P(`	"connectrpc.com/connect"`)
 	g.P()
 	g.P(`	cerr "github.com/balcieren/connect-go-errors"`)
 	g.P(")")
 	g.P()
 
-	// Generate error sentinel variables
-	g.P("// Error sentinel variables for use with errors.Is and cerr.New.")
-	g.P("var (")
+	// Generate error code constants (type-safe)
+	g.P("// Error code constants for use with cerr.New, cerr.Wrap, etc.")
+	g.P("const (")
 	for _, e := range errors {
 		varName := "Err" + errorCodeToConstant(e.Code)
-		g.P(fmt.Sprintf("\t%s = cerr.NewCodedError(%q)", varName, e.Code))
+		g.P(fmt.Sprintf("\t%s cerr.ErrorCode = %q", varName, e.Code))
+	}
+	g.P(")")
+	g.P()
+
+	// Generate error sentinel variables for errors.Is/As support
+	g.P("// Error sentinel variables for use with errors.Is.")
+	g.P("var (")
+	for _, e := range errors {
+		varName := "Err" + errorCodeToConstant(e.Code) + "Sentinel"
+		constName := "Err" + errorCodeToConstant(e.Code)
+		g.P(fmt.Sprintf("\t%s = cerr.NewCodedError(%s)", varName, constName))
 	}
 	g.P(")")
 	g.P()
@@ -130,8 +153,9 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P("func init() {")
 	g.P("\tcerr.RegisterAll([]cerr.Error{")
 	for _, e := range errors {
+		constName := "Err" + errorCodeToConstant(e.Code)
 		g.P("\t\t{")
-		g.P(fmt.Sprintf("\t\t\tCode:        %q,", e.Code))
+		g.P(fmt.Sprintf("\t\t\tCode:        string(%s),", constName))
 		g.P(fmt.Sprintf("\t\t\tMessageTpl:  %q,", e.Message))
 		g.P(fmt.Sprintf("\t\t\tConnectCode: %s,", mapConnectCode(e.ConnectCode)))
 		g.P(fmt.Sprintf("\t\t\tRetryable:   %t,", e.Retryable))
@@ -139,11 +163,71 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	}
 	g.P("\t})")
 	g.P("}")
+	g.P()
+
+	// Generate typed constructor functions with struct parameters
+	g.P("// Typed constructor functions for compile-time safe error creation.")
+	g.P("// Parameters are derived from {{placeholder}} fields in message templates.")
+	for _, e := range errors {
+		constName := "Err" + errorCodeToConstant(e.Code)
+		baseName := errorCodeToConstant(e.Code)
+		funcName := "New" + baseName
+		fields := extractTemplateFields(e.Message)
+
+		if len(fields) == 0 {
+			// No placeholders → no-arg constructor
+			g.P(fmt.Sprintf("// %s creates a *connect.Error for %s.", funcName, e.Code))
+			g.P(fmt.Sprintf("func %s() *connect.Error {", funcName))
+			g.P(fmt.Sprintf("\treturn cerr.New(%s, nil)", constName))
+			g.P("}")
+		} else {
+			// Generate params struct
+			structName := baseName + "Params"
+			g.P(fmt.Sprintf("// %s holds the template fields for %s.", structName, e.Code))
+			g.P(fmt.Sprintf("type %s struct {", structName))
+			for _, f := range fields {
+				g.P(fmt.Sprintf("\t%s string", fieldToExportedName(f)))
+			}
+			g.P("}")
+			g.P()
+
+			// Generate constructor
+			g.P(fmt.Sprintf("// %s creates a *connect.Error for %s.", funcName, e.Code))
+			g.P(fmt.Sprintf("func %s(p %s) *connect.Error {", funcName, structName))
+
+			// Build cerr.M{} from struct fields
+			var mapEntries []string
+			for _, f := range fields {
+				mapEntries = append(mapEntries, fmt.Sprintf("%q: p.%s", f, fieldToExportedName(f)))
+			}
+			g.P(fmt.Sprintf("\treturn cerr.New(%s, cerr.M{%s})", constName, strings.Join(mapEntries, ", ")))
+			g.P("}")
+		}
+		g.P()
+	}
+
+	// Generate client-side IsXxx error matchers
+	g.P("// Client-side error matchers for checking errors returned by Connect RPC calls.")
+	for _, e := range errors {
+		baseName := errorCodeToConstant(e.Code)
+		constName := "Err" + baseName
+		funcName := "Is" + baseName
+		g.P(fmt.Sprintf("// %s reports whether err is a %s error.", funcName, e.Code))
+		g.P(fmt.Sprintf("func %s(err error) bool {", funcName))
+		g.P("\tvar connectErr *connect.Error")
+		g.P("\tif !errors.As(err, &connectErr) {")
+		g.P("\t\treturn false")
+		g.P("\t}")
+		g.P("\tcode, ok := cerr.ExtractErrorCode(connectErr)")
+		g.P(fmt.Sprintf("\treturn ok && code == string(%s)", constName))
+		g.P("}")
+		g.P()
+	}
 }
 
-// parseConnectErrors extracts ErrorDef messages from wire-format MethodOptions
-// by looking for field number 50001 (the connect_error extension).
-func parseConnectErrors(b []byte) []errorDef {
+// parseExtensionErrors extracts ErrorDef messages from wire-format options
+// by looking for the specified field number.
+func parseExtensionErrors(b []byte, fieldNum protowire.Number) []errorDef {
 	var defs []errorDef
 	for len(b) > 0 {
 		num, wtype, n := protowire.ConsumeTag(b)
@@ -162,7 +246,7 @@ func parseConnectErrors(b []byte) []errorDef {
 		case protowire.BytesType:
 			v, vn := protowire.ConsumeBytes(b)
 			n = vn
-			if num == 50001 && n > 0 {
+			if num == fieldNum && n > 0 {
 				if def, ok := parseErrorDef(v); ok {
 					defs = append(defs, def)
 				}
@@ -245,6 +329,47 @@ func errorCodeToConstant(code string) string {
 		if len(p) > 0 {
 			result += strings.ToUpper(p[:1]) + strings.ToLower(p[1:])
 		}
+	}
+	return result
+}
+
+// extractTemplateFields parses {{placeholder}} names from a message template.
+// Returns unique fields in order of first appearance.
+func extractTemplateFields(message string) []string {
+	var fields []string
+	seen := make(map[string]bool)
+	i := 0
+	for i < len(message) {
+		start := strings.Index(message[i:], "{{")
+		if start == -1 {
+			break
+		}
+		start += i
+		end := strings.Index(message[start:], "}}")
+		if end == -1 {
+			break
+		}
+		end += start
+		field := message[start+2 : end]
+		if field != "" && !seen[field] {
+			seen[field] = true
+			fields = append(fields, field)
+		}
+		i = end + 2
+	}
+	return fields
+}
+
+// fieldToExportedName converts a snake_case template field to a PascalCase Go exported name.
+// e.g. "product_id" → "ProductId", "email" → "Email"
+func fieldToExportedName(field string) string {
+	parts := strings.Split(field, "_")
+	var result string
+	for _, p := range parts {
+		if len(p) == 0 {
+			continue
+		}
+		result += strings.ToUpper(p[:1]) + strings.ToLower(p[1:])
 	}
 	return result
 }

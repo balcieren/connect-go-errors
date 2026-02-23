@@ -27,3 +27,9 @@ message ErrorDef {
 extend google.protobuf.MethodOptions {
   repeated ErrorDef connect_error = 50001;
 }
+
+// Extend FileOptions to attach shared error definitions at the file level.
+// These are available to all services in the file and avoid repetition.
+extend google.protobuf.FileOptions {
+  repeated ErrorDef error = 50002;
+}

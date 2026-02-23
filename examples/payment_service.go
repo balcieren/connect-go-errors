@@ -9,22 +9,28 @@ import (
 	cerr "github.com/balcieren/connect-go-errors"
 )
 
+const (
+	ErrInsufficientFunds cerr.ErrorCode = "ERROR_INSUFFICIENT_FUNDS"
+	ErrCardDeclined      cerr.ErrorCode = "ERROR_CARD_DECLINED"
+	ErrPaymentTimeout    cerr.ErrorCode = "ERROR_PAYMENT_TIMEOUT"
+)
+
 func init() {
 	cerr.RegisterAll([]cerr.Error{
 		{
-			Code:        "ERROR_INSUFFICIENT_FUNDS",
+			Code:        string(ErrInsufficientFunds),
 			MessageTpl:  "Insufficient funds: requested {{amount}}, available {{balance}}",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        "ERROR_CARD_DECLINED",
+			Code:        string(ErrCardDeclined),
 			MessageTpl:  "Card ending in {{last4}} was declined: {{reason}}",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        "ERROR_PAYMENT_TIMEOUT",
+			Code:        string(ErrPaymentTimeout),
 			MessageTpl:  "Payment processing timed out for order '{{order_id}}'",
 			ConnectCode: connect.CodeDeadlineExceeded,
 			Retryable:   true,
@@ -45,7 +51,7 @@ func (s *PaymentService) ProcessPayment(ctx context.Context, orderID string, amo
 
 	balance := 50.0
 	if amount > balance {
-		return cerr.New("ERROR_INSUFFICIENT_FUNDS", cerr.M{
+		return cerr.New(ErrInsufficientFunds, cerr.M{
 			"amount":  fmt.Sprintf("%.2f", amount),
 			"balance": fmt.Sprintf("%.2f", balance),
 		})

@@ -3,9 +3,29 @@ package connectgoerrors
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"connectrpc.com/connect"
 )
+
+// ErrorCoder is the interface accepted by all error creation functions.
+// Both ErrorCode (named string) and *CodedError satisfy this interface.
+type ErrorCoder interface {
+	Code() string
+}
+
+// ErrorCode is a type-safe error code identifier.
+// Use this instead of raw strings for compile-time safety.
+//
+// Example:
+//
+//	const MyError cerr.ErrorCode = "ERROR_CUSTOM"
+//	cerr.New(MyError, cerr.M{"key": "val"})
+type ErrorCode string
+
+// Code returns the string representation of the error code.
+// This method satisfies the ErrorCoder interface.
+func (c ErrorCode) Code() string { return string(c) }
 
 // M is a shorthand type for template data maps.
 // Keys are placeholder names, values are their replacements.
@@ -15,34 +35,52 @@ import (
 //	connectgoerrors.M{"id": "123", "email": "user@example.com"}
 type M map[string]string
 
-// default header keys
-var (
-	headerErrorCode = "x-error-code"
-	headerRetryable = "x-retryable"
-)
+// headerKeys holds the configured metadata key names.
+type headerKeys struct {
+	errorCode string
+	retryable string
+}
+
+// headerKeysVal stores the current headerKeys atomically for lock-free reads.
+var headerKeysVal atomic.Value
+
+func init() {
+	headerKeysVal.Store(headerKeys{
+		errorCode: "x-error-code",
+		retryable: "x-retryable",
+	})
+}
+
+// getHeaderKeys returns the current header key configuration.
+func getHeaderKeys() headerKeys {
+	return headerKeysVal.Load().(headerKeys)
+}
 
 // SetHeaderKeys reconfigures the metadata keys used for error codes and retryable flags.
-// This is useful if you need to avoid collisions or follow a different naming convention.
+// This is safe for concurrent use.
 //
 // Example:
 //
 //	cerr.SetHeaderKeys("x-app-error-code", "x-app-retryable")
 func SetHeaderKeys(errorCodeKey, retryableKey string) {
+	current := getHeaderKeys()
 	if errorCodeKey != "" {
-		headerErrorCode = errorCodeKey
+		current.errorCode = errorCodeKey
 	}
 	if retryableKey != "" {
-		headerRetryable = retryableKey
+		current.retryable = retryableKey
 	}
+	headerKeysVal.Store(current)
 }
 
 // setMeta attaches error code and retryable metadata to a Connect error.
 func setMeta(connectErr *connect.Error, e Error) {
-	connectErr.Meta().Set(headerErrorCode, e.Code)
+	hk := getHeaderKeys()
+	connectErr.Meta().Set(hk.errorCode, e.Code)
 	if e.Retryable {
-		connectErr.Meta().Set(headerRetryable, "true")
+		connectErr.Meta().Set(hk.retryable, "true")
 	} else {
-		connectErr.Meta().Set(headerRetryable, "false")
+		connectErr.Meta().Set(hk.retryable, "false")
 	}
 }
 
@@ -54,20 +92,22 @@ func FromError(connectErr *connect.Error) (Error, bool) {
 		return Error{}, false
 	}
 
-	code := connectErr.Meta().Get(headerErrorCode)
+	hk := getHeaderKeys()
+	code := connectErr.Meta().Get(hk.errorCode)
 	if code == "" {
 		return Error{}, false
 	}
 
-	return Lookup(code)
+	return Lookup(ErrorCode(code))
 }
 
-// ErrorCode extracts the domain error code from a *connect.Error's metadata.
-func ErrorCode(connectErr *connect.Error) (string, bool) {
+// ExtractErrorCode extracts the domain error code from a *connect.Error's metadata.
+func ExtractErrorCode(connectErr *connect.Error) (string, bool) {
 	if connectErr == nil {
 		return "", false
 	}
-	code := connectErr.Meta().Get(headerErrorCode)
+	hk := getHeaderKeys()
+	code := connectErr.Meta().Get(hk.errorCode)
 	if code == "" {
 		return "", false
 	}
@@ -78,19 +118,19 @@ func ErrorCode(connectErr *connect.Error) (string, bool) {
 // It looks up the error definition in the Registry, formats the message template
 // with the provided data, and returns a Connect error with the appropriate status code.
 //
-// The code parameter can be either a string error code or a *CodedError sentinel.
+// The code parameter must implement ErrorCoder (e.g. ErrorCode or *CodedError).
 // If the error code is not found in the Registry, it falls back to CodeInternal.
 //
 // Example:
 //
-//	// Using string code
+//	// Using ErrorCode constant
 //	return nil, connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"})
 //
 //	// Using generated error sentinel
 //	return nil, connectgoerrors.New(userv1.ErrUserNotFound, connectgoerrors.M{"id": "123"})
-func New(code any, data M) *connect.Error {
+func New(code ErrorCoder, data M) *connect.Error {
 	codeStr := extractCode(code)
-	e, ok := Lookup(codeStr)
+	e, ok := Lookup(ErrorCode(codeStr))
 	if !ok {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("unknown error code: %s", codeStr))
 	}
@@ -102,32 +142,19 @@ func New(code any, data M) *connect.Error {
 	return connectErr
 }
 
-// extractCode extracts the error code string from various input types.
-// Supports: string, *CodedError, or any type with ErrorCode() method.
-func extractCode(code any) string {
+// extractCode extracts the error code string from an ErrorCoder implementation.
+func extractCode(code ErrorCoder) string {
 	if code == nil {
 		return ""
 	}
-	switch c := code.(type) {
-	case string:
-		return c
-	case *CodedError:
-		if c == nil {
-			return ""
-		}
-		return c.ErrorCode()
-	case interface{ ErrorCode() string }:
-		return c.ErrorCode()
-	default:
-		return fmt.Sprintf("%v", code)
-	}
+	return code.Code()
 }
 
 // NewWithMessage creates a *connect.Error using a custom message template instead of
 // the one defined in the Registry. The error code is still used to determine
 // the Connect status code and retryable flag.
 //
-// The code parameter can be either a string error code or a *CodedError sentinel.
+// The code parameter must implement ErrorCoder (e.g. ErrorCode or *CodedError).
 //
 // Example:
 //
@@ -136,9 +163,9 @@ func extractCode(code any) string {
 //	    "User '{{id}}' does not exist in tenant '{{tenant}}'",
 //	    connectgoerrors.M{"id": "123", "tenant": "acme"},
 //	)
-func NewWithMessage(code any, customMsg string, data M) *connect.Error {
+func NewWithMessage(code ErrorCoder, customMsg string, data M) *connect.Error {
 	codeStr := extractCode(code)
-	e, ok := Lookup(codeStr)
+	e, ok := Lookup(ErrorCode(codeStr))
 	if !ok {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("unknown error code: %s", codeStr))
 	}
@@ -165,7 +192,7 @@ func FromCode(code connect.Code, msg string) *connect.Error {
 // the Registry. The original error message is preserved and the template message
 // is prepended. This is useful for adding user-facing context to internal errors.
 //
-// The code parameter can be either a string error code or a *CodedError sentinel.
+// The code parameter must implement ErrorCoder (e.g. ErrorCode or *CodedError).
 //
 // Example:
 //
@@ -173,9 +200,9 @@ func FromCode(code connect.Code, msg string) *connect.Error {
 //	if err != nil {
 //	    return nil, connectgoerrors.Wrap(connectgoerrors.ErrNotFound, err, connectgoerrors.M{"id": id})
 //	}
-func Wrap(code any, err error, data M) *connect.Error {
+func Wrap(code ErrorCoder, err error, data M) *connect.Error {
 	codeStr := extractCode(code)
-	e, ok := Lookup(codeStr)
+	e, ok := Lookup(ErrorCode(codeStr))
 	if !ok {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("unknown error code %s: %w", codeStr, err))
 	}
@@ -190,7 +217,7 @@ func Wrap(code any, err error, data M) *connect.Error {
 
 // IsRetryable checks whether an error code is marked as retryable in the Registry.
 // Returns false if the error code is not found.
-func IsRetryable(code string) bool {
+func IsRetryable(code ErrorCode) bool {
 	e, ok := Lookup(code)
 	if !ok {
 		return false
@@ -200,7 +227,7 @@ func IsRetryable(code string) bool {
 
 // ConnectCode returns the Connect status code for a registered error code.
 // Returns connect.CodeInternal if the error code is not found.
-func ConnectCode(code string) connect.Code {
+func ConnectCode(code ErrorCode) connect.Code {
 	e, ok := Lookup(code)
 	if !ok {
 		return connect.CodeInternal
@@ -212,14 +239,14 @@ func ConnectCode(code string) connect.Code {
 // Instead of using template placeholders, this uses fmt.Sprintf-style formatting.
 // The error code is still used to determine the Connect status code and retryable flag.
 //
-// The code parameter can be either a string error code or a *CodedError sentinel.
+// The code parameter must implement ErrorCoder (e.g. ErrorCode or *CodedError).
 //
 // Example:
 //
 //	return nil, cerr.Newf(cerr.ErrNotFound, "User %q not found in org %s", userID, orgName)
-func Newf(code any, format string, args ...any) *connect.Error {
+func Newf(code ErrorCoder, format string, args ...any) *connect.Error {
 	codeStr := extractCode(code)
-	e, ok := Lookup(codeStr)
+	e, ok := Lookup(ErrorCode(codeStr))
 	if !ok {
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("unknown error code: %s", codeStr))
 	}
@@ -250,8 +277,18 @@ type CodedError struct {
 // Error implements the error interface.
 func (e *CodedError) Error() string { return e.msg }
 
+// Code returns the domain error code string.
+// This method satisfies the ErrorCoder interface.
+func (e *CodedError) Code() string {
+	if e == nil {
+		return ""
+	}
+	return e.code
+}
+
 // ErrorCode returns the domain error code (e.g. "ERROR_NOT_FOUND").
-func (e *CodedError) ErrorCode() string { return e.code }
+// Deprecated: Use Code() instead.
+func (e *CodedError) ErrorCode() string { return e.Code() }
 
 // Is reports whether target is a *CodedError with the same code.
 func (e *CodedError) Is(target error) bool {
@@ -270,8 +307,8 @@ func (e *CodedError) Is(target error) bool {
 //
 //	// later:
 //	if errors.Is(connectErr.Unwrap(), ErrNotFound) { ... }
-func NewCodedError(code string) *CodedError {
-	return &CodedError{code: code}
+func NewCodedError(code ErrorCode) *CodedError {
+	return &CodedError{code: string(code)}
 }
 
 // WithDetails adds structured error details to an existing *connect.Error.

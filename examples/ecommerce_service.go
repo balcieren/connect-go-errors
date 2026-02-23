@@ -8,22 +8,28 @@ import (
 	cerr "github.com/balcieren/connect-go-errors"
 )
 
+const (
+	ErrOutOfStock          cerr.ErrorCode = "ERROR_OUT_OF_STOCK"
+	ErrCartLimit           cerr.ErrorCode = "ERROR_CART_LIMIT"
+	ErrShippingUnavailable cerr.ErrorCode = "ERROR_SHIPPING_UNAVAILABLE"
+)
+
 func init() {
 	cerr.RegisterAll([]cerr.Error{
 		{
-			Code:        "ERROR_OUT_OF_STOCK",
+			Code:        string(ErrOutOfStock),
 			MessageTpl:  "Product '{{product_id}}' is out of stock",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
 		},
 		{
-			Code:        "ERROR_CART_LIMIT",
+			Code:        string(ErrCartLimit),
 			MessageTpl:  "Cart limit exceeded: maximum {{max}} items allowed",
 			ConnectCode: connect.CodeResourceExhausted,
 			Retryable:   false,
 		},
 		{
-			Code:        "ERROR_SHIPPING_UNAVAILABLE",
+			Code:        string(ErrShippingUnavailable),
 			MessageTpl:  "Shipping to '{{region}}' is not available",
 			ConnectCode: connect.CodeFailedPrecondition,
 			Retryable:   false,
@@ -43,14 +49,14 @@ func (s *EcommerceService) AddToCart(ctx context.Context, productID string, quan
 	}
 
 	if quantity > 100 {
-		return cerr.New("ERROR_CART_LIMIT", cerr.M{
+		return cerr.New(ErrCartLimit, cerr.M{
 			"max": "100",
 		})
 	}
 
 	// Simulate out of stock
 	if productID == "DISCONTINUED" {
-		return cerr.New("ERROR_OUT_OF_STOCK", cerr.M{
+		return cerr.New(ErrOutOfStock, cerr.M{
 			"product_id": productID,
 		})
 	}
@@ -62,7 +68,7 @@ func (s *EcommerceService) AddToCart(ctx context.Context, productID string, quan
 func (s *EcommerceService) SetShippingRegion(ctx context.Context, region string) error {
 	blocked := map[string]bool{"ANTARCTICA": true, "MOON": true}
 	if blocked[region] {
-		return cerr.New("ERROR_SHIPPING_UNAVAILABLE", cerr.M{
+		return cerr.New(ErrShippingUnavailable, cerr.M{
 			"region": region,
 		})
 	}
