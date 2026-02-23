@@ -21,7 +21,7 @@ make test
 - `registry.go` - Error definitions and constants
 - `template.go` - Template parsing and substitution
 - `proto/connecterrors/v1/error.proto` - Proto extension definition
-- `cmd/protoc-gen-connect-errors/` - Protoc plugin
+- `cmd/protoc-gen-connect-errors-go/` - Protoc plugin
 - `examples/` - Usage examples
 
 ## Running Tests

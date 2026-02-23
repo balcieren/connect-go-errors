@@ -29,8 +29,8 @@ vendor/
 Thumbs.db
 
 # Build artifacts (binary only, not the source directory)
-/protoc-gen-connect-errors
-cmd/protoc-gen-connect-errors/protoc-gen-connect-errors
+/protoc-gen-connect-errors-go
+cmd/protoc-gen-connect-errors-go/protoc-gen-connect-errors-go
 
 # Prompts
 PROMPTS.md

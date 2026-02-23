@@ -1,4 +1,4 @@
-BINARY_NAME=protoc-gen-connect-errors
+BINARY_NAME=protoc-gen-connect-errors-go
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 LDFLAGS=-ldflags "-s -w -X main.version=$(VERSION)"
 
@@ -9,7 +9,7 @@ all: test build
 ## Build the protoc plugin binary
 build:
 	@echo "Building $(BINARY_NAME)..."
-	go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/protoc-gen-connect-errors
+	go build $(LDFLAGS) -o bin/$(BINARY_NAME) ./cmd/protoc-gen-connect-errors-go
 
 ## Run all tests with coverage
 test:
@@ -29,7 +29,7 @@ clean:
 ## Install the plugin binary to GOPATH/bin
 install:
 	@echo "Installing $(BINARY_NAME)..."
-	go install ./cmd/protoc-gen-connect-errors
+	go install ./cmd/protoc-gen-connect-errors-go
 
 ## Generate code from proto files (requires buf)
 proto-gen:

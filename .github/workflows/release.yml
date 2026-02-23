@@ -27,19 +27,19 @@ jobs:
       - name: Build binaries
         run: |
           VERSION=${GITHUB_REF_NAME}
-          BINARY=protoc-gen-connect-errors
+          BINARY=protoc-gen-connect-errors-go
           mkdir -p dist
 
           for GOOS in linux darwin; do
             for GOARCH in amd64 arm64; do
               OUTPUT="dist/${BINARY}_${GOOS}_${GOARCH}"
               echo "Building $OUTPUT..."
-              GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUTPUT" ./cmd/protoc-gen-connect-errors
+              GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-s -w -X main.version=$VERSION" -o "$OUTPUT" ./cmd/protoc-gen-connect-errors-go
             done
           done
 
           # Windows amd64
-          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=$VERSION" -o "dist/${BINARY}_windows_amd64.exe" ./cmd/protoc-gen-connect-errors
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.version=$VERSION" -o "dist/${BINARY}_windows_amd64.exe" ./cmd/protoc-gen-connect-errors-go
 
       - name: Create release
         uses: softprops/action-gh-release@v2
