@@ -1,4 +1,4 @@
 version: v2
 modules:
   - path: proto
-    name: buf.build/balcieren/connect-go-errors
+    name: buf.build/balcieren/connect-errors
