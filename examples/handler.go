@@ -1,11 +1,11 @@
-// Package examples demonstrates usage of the connect-go-errors package
+// Package examples demonstrates usage of the connect-errors-go package
 // in typical Connect RPC service handlers.
 package examples
 
 import (
 	"context"
 
-	cerr "github.com/balcieren/connect-go-errors"
+	cerr "github.com/balcieren/connect-errors-go"
 )
 
 // UserRepository is a mock interface for demonstration purposes.

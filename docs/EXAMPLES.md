@@ -6,7 +6,7 @@
 package main
 
 import (
-    connecterrors "github.com/balcieren/connect-go-errors"
+    connecterrors "github.com/balcieren/connect-errors-go"
 )
 
 func handleGetUser(id string) error {
@@ -28,7 +28,7 @@ func handleGetUser(id string) error {
 ```go
 import (
     "connectrpc.com/connect"
-    connecterrors "github.com/balcieren/connect-go-errors"
+    connecterrors "github.com/balcieren/connect-errors-go"
 )
 
 func init() {

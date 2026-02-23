@@ -1,4 +1,4 @@
-module github.com/balcieren/connect-go-errors
+module github.com/balcieren/connect-errors-go
 
 go 1.24.0
 

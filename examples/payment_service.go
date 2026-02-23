@@ -6,7 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	cerr "github.com/balcieren/connect-go-errors"
+	cerr "github.com/balcieren/connect-errors-go"
 )
 
 const (

@@ -124,7 +124,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P()
 	g.P(`	"connectrpc.com/connect"`)
 	g.P()
-	g.P(`	cerr "github.com/balcieren/connect-go-errors"`)
+	g.P(`	cerr "github.com/balcieren/connect-errors-go"`)
 	g.P(")")
 	g.P()
 

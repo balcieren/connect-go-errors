@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package connecterrors.v1;
 
-option go_package = "github.com/balcieren/connect-go-errors/proto/connecterrors;connecterrorspb";
+option go_package = "github.com/balcieren/connect-errors-go/proto/connecterrors;connecterrorspb";
 
 import "google/protobuf/descriptor.proto";
 

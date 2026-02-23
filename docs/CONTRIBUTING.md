@@ -1,4 +1,4 @@
-# Contributing to connect-go-errors
+# Contributing to connect-errors-go
 
 Thank you for considering contributing!
 
