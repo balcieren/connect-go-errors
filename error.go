@@ -1,4 +1,4 @@
-package connectgoerrors
+package connecterrors
 
 import (
 	"errors"
@@ -32,7 +32,7 @@ func (c ErrorCode) Code() string { return string(c) }
 //
 // Example:
 //
-//	connectgoerrors.M{"id": "123", "email": "user@example.com"}
+//	connecterrors.M{"id": "123", "email": "user@example.com"}
 type M map[string]string
 
 // headerKeys holds the configured metadata key names.
@@ -124,10 +124,10 @@ func ExtractErrorCode(connectErr *connect.Error) (string, bool) {
 // Example:
 //
 //	// Using ErrorCode constant
-//	return nil, connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"id": "123"})
+//	return nil, connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "123"})
 //
 //	// Using generated error sentinel
-//	return nil, connectgoerrors.New(userv1.ErrUserNotFound, connectgoerrors.M{"id": "123"})
+//	return nil, connecterrors.New(userv1.ErrUserNotFound, connecterrors.M{"id": "123"})
 func New(code ErrorCoder, data M) *connect.Error {
 	codeStr := extractCode(code)
 	e, ok := Lookup(ErrorCode(codeStr))
@@ -158,10 +158,10 @@ func extractCode(code ErrorCoder) string {
 //
 // Example:
 //
-//	return nil, connectgoerrors.NewWithMessage(
-//	    connectgoerrors.ErrNotFound,
+//	return nil, connecterrors.NewWithMessage(
+//	    connecterrors.ErrNotFound,
 //	    "User '{{id}}' does not exist in tenant '{{tenant}}'",
-//	    connectgoerrors.M{"id": "123", "tenant": "acme"},
+//	    connecterrors.M{"id": "123", "tenant": "acme"},
 //	)
 func NewWithMessage(code ErrorCoder, customMsg string, data M) *connect.Error {
 	codeStr := extractCode(code)
@@ -183,7 +183,7 @@ func NewWithMessage(code ErrorCoder, customMsg string, data M) *connect.Error {
 //
 // Example:
 //
-//	return nil, connectgoerrors.FromCode(connect.CodeInternal, "unexpected database error")
+//	return nil, connecterrors.FromCode(connect.CodeInternal, "unexpected database error")
 func FromCode(code connect.Code, msg string) *connect.Error {
 	return connect.NewError(code, errors.New(msg))
 }
@@ -198,7 +198,7 @@ func FromCode(code connect.Code, msg string) *connect.Error {
 //
 //	user, err := db.GetUser(ctx, id)
 //	if err != nil {
-//	    return nil, connectgoerrors.Wrap(connectgoerrors.ErrNotFound, err, connectgoerrors.M{"id": id})
+//	    return nil, connecterrors.Wrap(connecterrors.ErrNotFound, err, connecterrors.M{"id": id})
 //	}
 func Wrap(code ErrorCoder, err error, data M) *connect.Error {
 	codeStr := extractCode(code)

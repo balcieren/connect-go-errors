@@ -1,4 +1,4 @@
-package connectgoerrors
+package connecterrors
 
 import "testing"
 

@@ -1,4 +1,4 @@
-package connectgoerrors_test
+package connecterrors_test
 
 import (
 	"context"
@@ -6,20 +6,20 @@ import (
 
 	"connectrpc.com/connect"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-go-errors"
 )
 
 func TestErrorInterceptor(t *testing.T) {
-	var captured connectgoerrors.Error
+	var captured connecterrors.Error
 	var capturedErr *connect.Error
 
-	interceptor := connectgoerrors.ErrorInterceptor(func(_ context.Context, err *connect.Error, def connectgoerrors.Error) {
+	interceptor := connecterrors.ErrorInterceptor(func(_ context.Context, err *connect.Error, def connecterrors.Error) {
 		capturedErr = err
 		captured = def
 	})
 
 	// Simulate a handler that returns a domain error
-	domainErr := connectgoerrors.New(connectgoerrors.ErrNotFound, connectgoerrors.M{"resource": "user", "id": "42"})
+	domainErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"resource": "user", "id": "42"})
 
 	handler := interceptor(func(_ context.Context, _ connect.AnyRequest) (connect.AnyResponse, error) {
 		return nil, domainErr
@@ -33,14 +33,14 @@ func TestErrorInterceptor(t *testing.T) {
 	if capturedErr == nil {
 		t.Fatal("expected interceptor callback to be invoked")
 	}
-	if captured.Code != string(connectgoerrors.ErrNotFound) {
-		t.Errorf("captured code = %q, want %q", captured.Code, connectgoerrors.ErrNotFound)
+	if captured.Code != string(connecterrors.ErrNotFound) {
+		t.Errorf("captured code = %q, want %q", captured.Code, connecterrors.ErrNotFound)
 	}
 }
 
 func TestErrorInterceptorNoMeta(t *testing.T) {
 	called := false
-	interceptor := connectgoerrors.ErrorInterceptor(func(_ context.Context, _ *connect.Error, _ connectgoerrors.Error) {
+	interceptor := connecterrors.ErrorInterceptor(func(_ context.Context, _ *connect.Error, _ connecterrors.Error) {
 		called = true
 	})
 
@@ -58,7 +58,7 @@ func TestErrorInterceptorNoMeta(t *testing.T) {
 
 func TestErrorInterceptorNoError(t *testing.T) {
 	called := false
-	interceptor := connectgoerrors.ErrorInterceptor(func(_ context.Context, _ *connect.Error, _ connectgoerrors.Error) {
+	interceptor := connecterrors.ErrorInterceptor(func(_ context.Context, _ *connect.Error, _ connecterrors.Error) {
 		called = true
 	})
 

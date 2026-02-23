@@ -1,4 +1,4 @@
-package connectgoerrors_test
+package connecterrors_test
 
 import (
 	"fmt"
@@ -7,30 +7,30 @@ import (
 
 	"connectrpc.com/connect"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-go-errors"
 )
 
 func TestRegistryDefaultEntries(t *testing.T) {
-	codes := []connectgoerrors.ErrorCode{
-		connectgoerrors.ErrNotFound,
-		connectgoerrors.ErrInvalidArgument,
-		connectgoerrors.ErrAlreadyExists,
-		connectgoerrors.ErrPermissionDenied,
-		connectgoerrors.ErrUnauthenticated,
-		connectgoerrors.ErrInternal,
-		connectgoerrors.ErrUnavailable,
-		connectgoerrors.ErrDeadlineExceeded,
-		connectgoerrors.ErrResourceExhausted,
-		connectgoerrors.ErrFailedPrecondition,
-		connectgoerrors.ErrAborted,
-		connectgoerrors.ErrUnimplemented,
-		connectgoerrors.ErrCanceled,
-		connectgoerrors.ErrDataLoss,
+	codes := []connecterrors.ErrorCode{
+		connecterrors.ErrNotFound,
+		connecterrors.ErrInvalidArgument,
+		connecterrors.ErrAlreadyExists,
+		connecterrors.ErrPermissionDenied,
+		connecterrors.ErrUnauthenticated,
+		connecterrors.ErrInternal,
+		connecterrors.ErrUnavailable,
+		connecterrors.ErrDeadlineExceeded,
+		connecterrors.ErrResourceExhausted,
+		connecterrors.ErrFailedPrecondition,
+		connecterrors.ErrAborted,
+		connecterrors.ErrUnimplemented,
+		connecterrors.ErrCanceled,
+		connecterrors.ErrDataLoss,
 	}
 
 	for _, code := range codes {
 		t.Run(string(code), func(t *testing.T) {
-			e, ok := connectgoerrors.Lookup(code)
+			e, ok := connecterrors.Lookup(code)
 			if !ok {
 				t.Fatalf("Lookup(%q) not found", code)
 			}
@@ -46,22 +46,22 @@ func TestRegistryDefaultEntries(t *testing.T) {
 
 func TestRegistryConnectCodes(t *testing.T) {
 	tests := []struct {
-		code        connectgoerrors.ErrorCode
+		code        connecterrors.ErrorCode
 		connectCode connect.Code
 	}{
-		{connectgoerrors.ErrNotFound, connect.CodeNotFound},
-		{connectgoerrors.ErrInvalidArgument, connect.CodeInvalidArgument},
-		{connectgoerrors.ErrAlreadyExists, connect.CodeAlreadyExists},
-		{connectgoerrors.ErrPermissionDenied, connect.CodePermissionDenied},
-		{connectgoerrors.ErrUnauthenticated, connect.CodeUnauthenticated},
-		{connectgoerrors.ErrInternal, connect.CodeInternal},
-		{connectgoerrors.ErrUnavailable, connect.CodeUnavailable},
-		{connectgoerrors.ErrDeadlineExceeded, connect.CodeDeadlineExceeded},
+		{connecterrors.ErrNotFound, connect.CodeNotFound},
+		{connecterrors.ErrInvalidArgument, connect.CodeInvalidArgument},
+		{connecterrors.ErrAlreadyExists, connect.CodeAlreadyExists},
+		{connecterrors.ErrPermissionDenied, connect.CodePermissionDenied},
+		{connecterrors.ErrUnauthenticated, connect.CodeUnauthenticated},
+		{connecterrors.ErrInternal, connect.CodeInternal},
+		{connecterrors.ErrUnavailable, connect.CodeUnavailable},
+		{connecterrors.ErrDeadlineExceeded, connect.CodeDeadlineExceeded},
 	}
 
 	for _, tt := range tests {
 		t.Run(string(tt.code), func(t *testing.T) {
-			e, _ := connectgoerrors.Lookup(tt.code)
+			e, _ := connecterrors.Lookup(tt.code)
 			if e.ConnectCode != tt.connectCode {
 				t.Errorf("ConnectCode = %v, want %v", e.ConnectCode, tt.connectCode)
 			}
@@ -70,17 +70,17 @@ func TestRegistryConnectCodes(t *testing.T) {
 }
 
 func TestRegistryRetryable(t *testing.T) {
-	retryable := []connectgoerrors.ErrorCode{connectgoerrors.ErrUnavailable, connectgoerrors.ErrDeadlineExceeded, connectgoerrors.ErrResourceExhausted, connectgoerrors.ErrAborted}
-	notRetryable := []connectgoerrors.ErrorCode{connectgoerrors.ErrNotFound, connectgoerrors.ErrInvalidArgument, connectgoerrors.ErrInternal}
+	retryable := []connecterrors.ErrorCode{connecterrors.ErrUnavailable, connecterrors.ErrDeadlineExceeded, connecterrors.ErrResourceExhausted, connecterrors.ErrAborted}
+	notRetryable := []connecterrors.ErrorCode{connecterrors.ErrNotFound, connecterrors.ErrInvalidArgument, connecterrors.ErrInternal}
 
 	for _, code := range retryable {
-		e, _ := connectgoerrors.Lookup(code)
+		e, _ := connecterrors.Lookup(code)
 		if !e.Retryable {
 			t.Errorf("expected %q to be retryable", code)
 		}
 	}
 	for _, code := range notRetryable {
-		e, _ := connectgoerrors.Lookup(code)
+		e, _ := connecterrors.Lookup(code)
 		if e.Retryable {
 			t.Errorf("expected %q to not be retryable", code)
 		}
@@ -88,12 +88,12 @@ func TestRegistryRetryable(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-	connectgoerrors.Register(connectgoerrors.Error{
+	connecterrors.Register(connecterrors.Error{
 		Code:        "ERROR_CUSTOM_REG",
 		MessageTpl:  "Custom: {{detail}}",
 		ConnectCode: connect.CodeInternal,
 	})
-	e, ok := connectgoerrors.Lookup(connectgoerrors.ErrorCode("ERROR_CUSTOM_REG"))
+	e, ok := connecterrors.Lookup(connecterrors.ErrorCode("ERROR_CUSTOM_REG"))
 	if !ok {
 		t.Fatal("custom error not found after Register")
 	}
@@ -103,19 +103,19 @@ func TestRegister(t *testing.T) {
 }
 
 func TestRegisterAll(t *testing.T) {
-	connectgoerrors.RegisterAll([]connectgoerrors.Error{
+	connecterrors.RegisterAll([]connecterrors.Error{
 		{Code: "ERROR_B1", MessageTpl: "B1", ConnectCode: connect.CodeInternal},
 		{Code: "ERROR_B2", MessageTpl: "B2", ConnectCode: connect.CodeNotFound},
 	})
-	for _, code := range []connectgoerrors.ErrorCode{"ERROR_B1", "ERROR_B2"} {
-		if _, ok := connectgoerrors.Lookup(code); !ok {
+	for _, code := range []connecterrors.ErrorCode{"ERROR_B1", "ERROR_B2"} {
+		if _, ok := connecterrors.Lookup(code); !ok {
 			t.Fatalf("Lookup(%q) not found after RegisterAll", code)
 		}
 	}
 }
 
 func TestLookupNotFound(t *testing.T) {
-	if _, ok := connectgoerrors.Lookup(connectgoerrors.ErrorCode("ERROR_NONEXISTENT")); ok {
+	if _, ok := connecterrors.Lookup(connecterrors.ErrorCode("ERROR_NONEXISTENT")); ok {
 		t.Error("expected not found")
 	}
 }
@@ -126,27 +126,27 @@ func TestMustLookupPanic(t *testing.T) {
 			t.Error("expected panic")
 		}
 	}()
-	connectgoerrors.MustLookup(connectgoerrors.ErrorCode("ERROR_NONEXISTENT_PANIC"))
+	connecterrors.MustLookup(connecterrors.ErrorCode("ERROR_NONEXISTENT_PANIC"))
 }
 
 func TestMustLookupSuccess(t *testing.T) {
-	e := connectgoerrors.MustLookup(connectgoerrors.ErrNotFound)
-	if e.Code != string(connectgoerrors.ErrNotFound) {
+	e := connecterrors.MustLookup(connecterrors.ErrNotFound)
+	if e.Code != string(connecterrors.ErrNotFound) {
 		t.Errorf("Code = %q", e.Code)
 	}
 }
 
 func TestRegisterOverwrite(t *testing.T) {
-	connectgoerrors.Register(connectgoerrors.Error{Code: "ERROR_OW", MessageTpl: "Original", ConnectCode: connect.CodeInternal})
-	connectgoerrors.Register(connectgoerrors.Error{Code: "ERROR_OW", MessageTpl: "Updated", ConnectCode: connect.CodeNotFound})
-	e, _ := connectgoerrors.Lookup(connectgoerrors.ErrorCode("ERROR_OW"))
+	connecterrors.Register(connecterrors.Error{Code: "ERROR_OW", MessageTpl: "Original", ConnectCode: connect.CodeInternal})
+	connecterrors.Register(connecterrors.Error{Code: "ERROR_OW", MessageTpl: "Updated", ConnectCode: connect.CodeNotFound})
+	e, _ := connecterrors.Lookup(connecterrors.ErrorCode("ERROR_OW"))
 	if e.MessageTpl != "Updated" {
 		t.Errorf("MessageTpl = %q, want Updated", e.MessageTpl)
 	}
 }
 
 func TestCodes(t *testing.T) {
-	codes := connectgoerrors.Codes()
+	codes := connecterrors.Codes()
 	if len(codes) < 14 {
 		t.Fatalf("expected at least 14 codes, got %d", len(codes))
 	}
@@ -161,7 +161,7 @@ func TestCodes(t *testing.T) {
 	for _, c := range codes {
 		found[c] = true
 	}
-	for _, want := range []string{string(connectgoerrors.ErrNotFound), string(connectgoerrors.ErrInternal), string(connectgoerrors.ErrCanceled)} {
+	for _, want := range []string{string(connecterrors.ErrNotFound), string(connecterrors.ErrInternal), string(connecterrors.ErrCanceled)} {
 		if !found[want] {
 			t.Errorf("expected code %q in Codes()", want)
 		}
@@ -181,7 +181,7 @@ func TestConcurrentRegistration(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < numOps; j++ {
 				code := fmt.Sprintf("ERR_CONCURRENT_%d_%d", id, j)
-				connectgoerrors.Register(connectgoerrors.Error{
+				connecterrors.Register(connecterrors.Error{
 					Code:        code,
 					MessageTpl:  "Concurrent error",
 					ConnectCode: connect.CodeInternal,
@@ -195,8 +195,8 @@ func TestConcurrentRegistration(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < numOps; j++ {
-				_, _ = connectgoerrors.Lookup(connectgoerrors.ErrNotFound)
-				_ = connectgoerrors.Codes()
+				_, _ = connecterrors.Lookup(connecterrors.ErrNotFound)
+				_ = connecterrors.Codes()
 			}
 		}()
 	}

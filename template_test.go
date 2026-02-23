@@ -1,9 +1,9 @@
-package connectgoerrors_test
+package connecterrors_test
 
 import (
 	"testing"
 
-	connectgoerrors "github.com/balcieren/connect-go-errors"
+	connecterrors "github.com/balcieren/connect-go-errors"
 )
 
 func TestTemplateFields(t *testing.T) {
@@ -23,7 +23,7 @@ func TestTemplateFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := connectgoerrors.TemplateFields(tt.template)
+			got := connecterrors.TemplateFields(tt.template)
 			if len(got) != len(tt.want) {
 				t.Fatalf("TemplateFields(%q) = %v, want %v", tt.template, got, tt.want)
 			}
@@ -40,21 +40,21 @@ func TestFormatTemplate(t *testing.T) {
 	tests := []struct {
 		name     string
 		template string
-		data     connectgoerrors.M
+		data     connecterrors.M
 		want     string
 	}{
-		{"single replacement", "User '{{id}}' not found", connectgoerrors.M{"id": "123"}, "User '123' not found"},
-		{"multiple replacements", "{{actor}} cannot update {{target}}", connectgoerrors.M{"actor": "alice", "target": "bob"}, "alice cannot update bob"},
-		{"missing field unchanged", "User '{{id}}' in {{org}}", connectgoerrors.M{"id": "123"}, "User '123' in {{org}}"},
+		{"single replacement", "User '{{id}}' not found", connecterrors.M{"id": "123"}, "User '123' not found"},
+		{"multiple replacements", "{{actor}} cannot update {{target}}", connecterrors.M{"actor": "alice", "target": "bob"}, "alice cannot update bob"},
+		{"missing field unchanged", "User '{{id}}' in {{org}}", connecterrors.M{"id": "123"}, "User '123' in {{org}}"},
 		{"nil data", "User '{{id}}'", nil, "User '{{id}}'"},
-		{"empty data", "User '{{id}}'", connectgoerrors.M{}, "User '{{id}}'"},
-		{"no placeholders", "Internal error", connectgoerrors.M{"id": "123"}, "Internal error"},
-		{"special chars in value", "Email '{{email}}'", connectgoerrors.M{"email": "a@b.com"}, "Email 'a@b.com'"},
+		{"empty data", "User '{{id}}'", connecterrors.M{}, "User '{{id}}'"},
+		{"no placeholders", "Internal error", connecterrors.M{"id": "123"}, "Internal error"},
+		{"special chars in value", "Email '{{email}}'", connecterrors.M{"email": "a@b.com"}, "Email 'a@b.com'"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := connectgoerrors.FormatTemplate(tt.template, tt.data)
+			got := connecterrors.FormatTemplate(tt.template, tt.data)
 			if got != tt.want {
 				t.Errorf("FormatTemplate() = %q, want %q", got, tt.want)
 			}
@@ -66,26 +66,26 @@ func TestValidateTemplate(t *testing.T) {
 	tests := []struct {
 		name      string
 		template  string
-		data      connectgoerrors.M
+		data      connecterrors.M
 		wantErr   bool
 		wantCount int
 	}{
-		{"all fields provided", "User '{{id}}'", connectgoerrors.M{"id": "123"}, false, 0},
-		{"missing field", "User '{{id}}'", connectgoerrors.M{}, true, 1},
-		{"multiple missing", "{{actor}} {{target}}", connectgoerrors.M{}, true, 2},
-		{"no placeholders", "Static message", connectgoerrors.M{}, false, 0},
-		{"extra fields ok", "User '{{id}}'", connectgoerrors.M{"id": "123", "extra": "v"}, false, 0},
-		{"partial missing", "{{id}} in {{org}}", connectgoerrors.M{"id": "123"}, true, 1},
+		{"all fields provided", "User '{{id}}'", connecterrors.M{"id": "123"}, false, 0},
+		{"missing field", "User '{{id}}'", connecterrors.M{}, true, 1},
+		{"multiple missing", "{{actor}} {{target}}", connecterrors.M{}, true, 2},
+		{"no placeholders", "Static message", connecterrors.M{}, false, 0},
+		{"extra fields ok", "User '{{id}}'", connecterrors.M{"id": "123", "extra": "v"}, false, 0},
+		{"partial missing", "{{id}} in {{org}}", connecterrors.M{"id": "123"}, true, 1},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := connectgoerrors.ValidateTemplate(tt.template, tt.data)
+			err := connecterrors.ValidateTemplate(tt.template, tt.data)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("ValidateTemplate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.wantErr {
-				mfe, ok := err.(*connectgoerrors.MissingFieldError)
+				mfe, ok := err.(*connecterrors.MissingFieldError)
 				if !ok {
 					t.Fatalf("expected *MissingFieldError, got %T", err)
 				}
@@ -98,7 +98,7 @@ func TestValidateTemplate(t *testing.T) {
 }
 
 func TestMissingFieldErrorMessage(t *testing.T) {
-	err := &connectgoerrors.MissingFieldError{
+	err := &connecterrors.MissingFieldError{
 		Template: "User '{{id}}'",
 		Missing:  []string{"id"},
 	}
