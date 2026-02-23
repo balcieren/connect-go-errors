@@ -18,7 +18,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-const version = "0.1.3"
+var version = "0.1.3"
 
 func main() {
 	showVersion := flag.Bool("version", false, "print version")
