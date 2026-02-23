@@ -55,7 +55,7 @@ func main() {
 type errorDef struct {
 	Code        string
 	Message     string
-	ConnectCode string
+	ConnectCode int
 	Retryable   bool
 }
 
@@ -278,13 +278,6 @@ func parseErrorDef(b []byte) (errorDef, bool) {
 		b = b[n:]
 
 		switch wtype {
-		case protowire.VarintType:
-			v, vn := protowire.ConsumeVarint(b)
-			n = vn
-			if num == 4 {
-				def.Retryable = v != 0
-				found = true
-			}
 		case protowire.BytesType:
 			v, vn := protowire.ConsumeBytes(b)
 			n = vn
@@ -295,8 +288,16 @@ func parseErrorDef(b []byte) (errorDef, bool) {
 			case 2:
 				def.Message = string(v)
 				found = true
+			}
+		case protowire.VarintType:
+			v, vn := protowire.ConsumeVarint(b)
+			n = vn
+			switch num {
 			case 3:
-				def.ConnectCode = string(v)
+				def.ConnectCode = int(v)
+				found = true
+			case 4:
+				def.Retryable = v != 0
 				found = true
 			}
 		default:
@@ -374,24 +375,24 @@ func fieldToExportedName(field string) string {
 	return result
 }
 
-func mapConnectCode(code string) string {
-	m := map[string]string{
-		"canceled":            "connect.CodeCanceled",
-		"unknown":             "connect.CodeUnknown",
-		"invalid_argument":    "connect.CodeInvalidArgument",
-		"deadline_exceeded":   "connect.CodeDeadlineExceeded",
-		"not_found":           "connect.CodeNotFound",
-		"already_exists":      "connect.CodeAlreadyExists",
-		"permission_denied":   "connect.CodePermissionDenied",
-		"resource_exhausted":  "connect.CodeResourceExhausted",
-		"failed_precondition": "connect.CodeFailedPrecondition",
-		"aborted":             "connect.CodeAborted",
-		"out_of_range":        "connect.CodeOutOfRange",
-		"unimplemented":       "connect.CodeUnimplemented",
-		"internal":            "connect.CodeInternal",
-		"unavailable":         "connect.CodeUnavailable",
-		"data_loss":           "connect.CodeDataLoss",
-		"unauthenticated":     "connect.CodeUnauthenticated",
+func mapConnectCode(code int) string {
+	m := map[int]string{
+		1:  "connect.CodeCanceled",
+		2:  "connect.CodeUnknown",
+		3:  "connect.CodeInvalidArgument",
+		4:  "connect.CodeDeadlineExceeded",
+		5:  "connect.CodeNotFound",
+		6:  "connect.CodeAlreadyExists",
+		7:  "connect.CodePermissionDenied",
+		8:  "connect.CodeResourceExhausted",
+		9:  "connect.CodeFailedPrecondition",
+		10: "connect.CodeAborted",
+		11: "connect.CodeOutOfRange",
+		12: "connect.CodeUnimplemented",
+		13: "connect.CodeInternal",
+		14: "connect.CodeUnavailable",
+		15: "connect.CodeDataLoss",
+		16: "connect.CodeUnauthenticated",
 	}
 	if v, ok := m[code]; ok {
 		return v

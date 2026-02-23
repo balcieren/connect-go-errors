@@ -80,21 +80,22 @@ func TestErrorCodeToConstant(t *testing.T) {
 
 func TestMapConnectCode(t *testing.T) {
 	tests := []struct {
-		code string
+		name string
+		code int
 		want string
 	}{
-		{"not_found", "connect.CodeNotFound"},
-		{"internal", "connect.CodeInternal"},
-		{"invalid_argument", "connect.CodeInvalidArgument"},
-		{"unauthenticated", "connect.CodeUnauthenticated"},
-		{"unknown_code", "connect.CodeInternal"}, // fallback
+		{"not_found", 5, "connect.CodeNotFound"},
+		{"internal", 13, "connect.CodeInternal"},
+		{"invalid_argument", 3, "connect.CodeInvalidArgument"},
+		{"unauthenticated", 16, "connect.CodeUnauthenticated"},
+		{"unknown_code", 99, "connect.CodeInternal"}, // fallback
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.code, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			got := mapConnectCode(tt.code)
 			if got != tt.want {
-				t.Errorf("mapConnectCode(%q) = %q, want %q", tt.code, got, tt.want)
+				t.Errorf("mapConnectCode(%d) = %q, want %q", tt.code, got, tt.want)
 			}
 		})
 	}
