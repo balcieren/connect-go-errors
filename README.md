@@ -409,27 +409,52 @@ cerr.SetHeaderKeys("x-custom-error-code", "x-custom-retryable")
 
 ---
 
-## Built-in Error Codes
+## Connect Code Reference (Proto)
 
-Pre-registered `ErrorCode` constants — no setup required:
+When defining errors in your `.proto` files, use the `Code` enum for the `connect_code` field. Most modern IDEs will provide autocomplete for these.
 
-| Constant                | Connect Code             | Retryable |
-| ----------------------- | ------------------------ | --------- |
-| `ErrNotFound`           | `CodeNotFound`           | No        |
-| `ErrInvalidArgument`    | `CodeInvalidArgument`    | No        |
-| `ErrAlreadyExists`      | `CodeAlreadyExists`      | No        |
-| `ErrPermissionDenied`   | `CodePermissionDenied`   | No        |
-| `ErrUnauthenticated`    | `CodeUnauthenticated`    | No        |
-| `ErrInternal`           | `CodeInternal`           | No        |
-| `ErrUnavailable`        | `CodeUnavailable`        | Yes       |
-| `ErrDeadlineExceeded`   | `CodeDeadlineExceeded`   | Yes       |
-| `ErrResourceExhausted`  | `CodeResourceExhausted`  | Yes       |
-| `ErrFailedPrecondition` | `CodeFailedPrecondition` | No        |
-| `ErrAborted`            | `CodeAborted`            | Yes       |
-| `ErrOutOfRange`         | `CodeOutOfRange`         | No        |
-| `ErrUnimplemented`      | `CodeUnimplemented`      | No        |
-| `ErrCanceled`           | `CodeCanceled`           | No        |
-| `ErrDataLoss`           | `CodeDataLoss`           | No        |
+| Proto Enum Constant        | Connect Status Code | Go Constant (`connect.Code`)     |
+| -------------------------- | ------------------- | -------------------------------- |
+| `CODE_CANCELED`            | Canceled            | `connect.CodeCanceled`           |
+| `CODE_UNKNOWN`             | Unknown             | `connect.CodeUnknown`            |
+| `CODE_INVALID_ARGUMENT`    | Invalid Argument    | `connect.CodeInvalidArgument`    |
+| `CODE_DEADLINE_EXCEEDED`   | Deadline Exceeded   | `connect.CodeDeadlineExceeded`   |
+| `CODE_NOT_FOUND`           | Not Found           | `connect.CodeNotFound`           |
+| `CODE_ALREADY_EXISTS`      | Already Exists      | `connect.CodeAlreadyExists`      |
+| `CODE_PERMISSION_DENIED`   | Permission Denied   | `connect.CodePermissionDenied`   |
+| `CODE_RESOURCE_EXHAUSTED`  | Resource Exhausted  | `connect.CodeResourceExhausted`  |
+| `CODE_FAILED_PRECONDITION` | Failed Precondition | `connect.CodeFailedPrecondition` |
+| `CODE_ABORTED`             | Aborted             | `connect.CodeAborted`            |
+| `CODE_OUT_OF_RANGE`        | Out Of Range        | `connect.CodeOutOfRange`         |
+| `CODE_UNIMPLEMENTED`       | Unimplemented       | `connect.CodeUnimplemented`      |
+| `CODE_INTERNAL`            | Internal            | `connect.CodeInternal`           |
+| `CODE_UNAVAILABLE`         | Unavailable         | `connect.CodeUnavailable`        |
+| `CODE_DATA_LOSS`           | Data Loss           | `connect.CodeDataLoss`           |
+| `CODE_UNAUTHENTICATED`     | Unauthenticated     | `connect.CodeUnauthenticated`    |
+
+---
+
+## Built-in Go Error Codes
+
+Preprocessing `ErrorCode` constants provided by the library:
+
+| Constant                | Default Connect Code       | Default Retryable |
+| ----------------------- | -------------------------- | ----------------- |
+| `ErrNotFound`           | `CODE_NOT_FOUND`           | No                |
+| `ErrInvalidArgument`    | `CODE_INVALID_ARGUMENT`    | No                |
+| `ErrAlreadyExists`      | `CODE_ALREADY_EXISTS`      | No                |
+| `ErrPermissionDenied`   | `CODE_PERMISSION_DENIED`   | No                |
+| `ErrUnauthenticated`    | `CODE_UNAUTHENTICATED`     | No                |
+| `ErrInternal`           | `CODE_INTERNAL`            | No                |
+| `ErrUnavailable`        | `CODE_UNAVAILABLE`         | Yes               |
+| `ErrDeadlineExceeded`   | `CODE_DEADLINE_EXCEEDED`   | Yes               |
+| `ErrResourceExhausted`  | `CODE_RESOURCE_EXHAUSTED`  | Yes               |
+| `ErrFailedPrecondition` | `CODE_FAILED_PRECONDITION` | No                |
+| `ErrAborted`            | `CODE_ABORTED`             | Yes               |
+| `ErrOutOfRange`         | `CODE_OUT_OF_RANGE`        | No                |
+| `ErrUnimplemented`      | `CODE_UNIMPLEMENTED`       | No                |
+| `ErrCanceled`           | `CODE_CANCELED`            | No                |
+| `ErrDataLoss`           | `CODE_DATA_LOSS`           | No                |
 
 ---
 
