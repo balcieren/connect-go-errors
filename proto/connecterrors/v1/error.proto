@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package connecterrors.v1;
+
+option go_package = "github.com/balcieren/connect-go-errors/proto/connecterrors;connecterrorspb";
+
+import "google/protobuf/descriptor.proto";
+
+// ErrorDef defines a single error that can be attached to an RPC method.
+// It carries all metadata needed for code generation and runtime error handling.
+message ErrorDef {
+  // Unique error code identifier, e.g. "ERROR_NOT_FOUND".
+  string code = 1;
+
+  // Message template with {{placeholder}} syntax, e.g. "User '{{id}}' not found".
+  string message = 2;
+
+  // Connect RPC status code name, e.g. "not_found", "invalid_argument".
+  string connect_code = 3;
+
+  // Whether the client should retry the request on this error.
+  bool retryable = 4;
+}
+
+// Extend MethodOptions to attach error definitions to individual RPC methods.
+// This allows errors to be defined declaratively in proto files and code-generated.
+extend google.protobuf.MethodOptions {
+  repeated ErrorDef connect_error = 50001;
+}
+
+// Extend FileOptions to attach shared error definitions at the file level.
+// These are available to all services in the file and avoid repetition.
+extend google.protobuf.FileOptions {
+  repeated ErrorDef error = 50002;
+}
