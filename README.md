@@ -56,7 +56,7 @@ version: v2
 modules:
   - path: proto
 deps:
-  - buf.build/balcieren/connect-go-errors
+  - buf.build/balcieren/connect-errors
   - buf.build/protocolbuffers/wellknowntypes
 ```
 
