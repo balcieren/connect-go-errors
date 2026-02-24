@@ -400,7 +400,7 @@ func TestWithMultipleDetails(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	connecterrors.WithDetails(connectErr, d1, d2)
+	connectErr = connecterrors.WithDetails(connectErr, d1, d2)
 
 	if len(connectErr.Details()) != 2 {
 		t.Errorf("len(Details) = %d, want 2", len(connectErr.Details()))
