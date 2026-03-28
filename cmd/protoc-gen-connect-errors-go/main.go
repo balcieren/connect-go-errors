@@ -171,7 +171,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	for _, e := range errors {
 		constName := "Err" + errorCodeToConstant(e.Code)
 		baseName := errorCodeToConstant(e.Code)
-		funcName := "New" + baseName
+		funcName := "NewErr" + baseName
 		fields := extractTemplateFields(e.Message)
 
 		if len(fields) == 0 {

@@ -20,7 +20,7 @@ option (connecterrors.v1.error) = {
 
 ```go
 // Use the generated typed constructor
-return nil, userv1.NewUserNotFound(userv1.UserNotFoundParams{
+return nil, userv1.NewErrUserNotFound(userv1.UserNotFoundParams{
     Id: req.Msg.Id,  // ← IDE autocomplete, compile-time checked
 })
 ```
@@ -32,7 +32,7 @@ return nil, userv1.NewUserNotFound(userv1.UserNotFoundParams{
 | Feature                       | Description                                                    |
 | ----------------------------- | -------------------------------------------------------------- |
 | 🔧 **Proto-first**            | Errors live in `.proto` files next to your service definitions |
-| ⚡ **Generated Constructors** | `NewXxx(XxxParams{})` — fully typed, zero string literals      |
+| ⚡ **Generated Constructors** | `NewErrXxx(XxxParams{})` — fully typed, zero string literals      |
 | 🎯 **Compile-time safe**      | `ErrorCode` type + struct params catch all typos at build      |
 | 📝 **Template Messages**      | `{{placeholder}}` → struct fields, validated by the compiler   |
 | 🔄 **Retryable Errors**       | Mark errors as retryable directly in proto                     |
@@ -195,7 +195,7 @@ type UserNotFoundParams struct {
     Id string
 }
 
-func NewUserNotFound(p UserNotFoundParams) *connect.Error {
+func NewErrUserNotFound(p UserNotFoundParams) *connect.Error {
     return cerr.New(ErrUserNotFound, cerr.M{"id": p.Id})
 }
 
@@ -203,7 +203,7 @@ type DeleteForbiddenParams struct {
     Reason string
 }
 
-func NewDeleteForbidden(p DeleteForbiddenParams) *connect.Error {
+func NewErrDeleteForbidden(p DeleteForbiddenParams) *connect.Error {
     return cerr.New(ErrDeleteForbidden, cerr.M{"reason": p.Reason})
 }
 
@@ -211,12 +211,12 @@ type EmailExistsParams struct {
     Email string
 }
 
-func NewEmailExists(p EmailExistsParams) *connect.Error {
+func NewErrEmailExists(p EmailExistsParams) *connect.Error {
     return cerr.New(ErrEmailExists, cerr.M{"email": p.Email})
 }
 
 // No placeholders → no-arg constructor
-func NewRateLimited() *connect.Error {
+func NewErrRateLimited() *connect.Error {
     return cerr.New(ErrRateLimited, nil)
 }
 
@@ -241,14 +241,14 @@ func IsUserNotFound(err error) bool {
 ```go
 func (s *UserServer) GetUser(ctx context.Context, req *connect.Request[userv1.GetUserRequest]) (*connect.Response[userv1.User], error) {
     if req.Msg.Id == "" {
-        return nil, userv1.NewInvalidUserId(userv1.InvalidUserIdParams{
+        return nil, userv1.NewErrInvalidUserId(userv1.InvalidUserIdParams{
             Id: req.Msg.Id,
         })
     }
 
     user, err := s.db.FindUser(ctx, req.Msg.Id)
     if err != nil {
-        return nil, userv1.NewUserNotFound(userv1.UserNotFoundParams{
+        return nil, userv1.NewErrUserNotFound(userv1.UserNotFoundParams{
             Id: req.Msg.Id,
         })
     }
@@ -259,7 +259,7 @@ func (s *UserServer) GetUser(ctx context.Context, req *connect.Request[userv1.Ge
 func (s *UserServer) CreateUser(ctx context.Context, req *connect.Request[userv1.CreateUserRequest]) (*connect.Response[userv1.User], error) {
     exists, _ := s.db.EmailExists(ctx, req.Msg.Email)
     if exists {
-        return nil, userv1.NewEmailExists(userv1.EmailExistsParams{
+        return nil, userv1.NewErrEmailExists(userv1.EmailExistsParams{
             Email: req.Msg.Email,
         })
     }
@@ -289,7 +289,7 @@ if err != nil {
 ### Server-Side Error Matching (errors.Is / errors.As)
 
 ```go
-connectErr := userv1.NewUserNotFound(userv1.UserNotFoundParams{Id: "123"})
+connectErr := userv1.NewErrUserNotFound(userv1.UserNotFoundParams{Id: "123"})
 
 // Match using generated sentinel
 errors.Is(connectErr.Unwrap(), userv1.ErrUserNotFoundSentinel)  // true
