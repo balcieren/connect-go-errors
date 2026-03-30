@@ -319,7 +319,7 @@ func Newf(code ErrorCoder, format string, args ...any) *connect.Error {
 }
 
 // CodedError is an error type that carries a domain error code alongside
-// the standard error interface. It enables errors.Is and errors.As support
+// the standard error interface. It enables errors.As support
 // for matching errors by their registered code.
 //
 // Example:
@@ -327,7 +327,7 @@ func Newf(code ErrorCoder, format string, args ...any) *connect.Error {
 //	err := cerr.New(cerr.ErrNotFound, cerr.M{"id": "123"})
 //	var coded *cerr.CodedError
 //	if errors.As(err.Unwrap(), &coded) {
-//	    fmt.Println(coded.ErrorCode()) // "ERROR_NOT_FOUND"
+//	    fmt.Println(coded.Code()) // "ERROR_NOT_FOUND"
 //	}
 type CodedError struct {
 	code string
@@ -349,27 +349,6 @@ func (e *CodedError) Code() string {
 // ErrorCode returns the domain error code (e.g. "ERROR_NOT_FOUND").
 // Deprecated: Use Code() instead.
 func (e *CodedError) ErrorCode() string { return e.Code() }
-
-// Is reports whether target is a *CodedError with the same code.
-func (e *CodedError) Is(target error) bool {
-	t, ok := target.(*CodedError)
-	if !ok {
-		return false
-	}
-	return e.code == t.code
-}
-
-// NewCodedError creates a sentinel error value for use with errors.Is.
-//
-// Example:
-//
-//	var ErrNotFound = cerr.NewCodedError(cerr.ErrNotFound)
-//
-//	// later:
-//	if errors.Is(connectErr.Unwrap(), ErrNotFound) { ... }
-func NewCodedError(code ErrorCode) *CodedError {
-	return &CodedError{code: string(code)}
-}
 
 // WithDetails adds structured error details to an existing *connect.Error.
 // Details are protobuf Any messages that can carry domain-specific error information.

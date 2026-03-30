@@ -138,16 +138,6 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P(")")
 	g.P()
 
-	// Generate error sentinel variables for errors.Is/As support
-	g.P("// Error sentinel variables for use with errors.Is.")
-	g.P("var (")
-	for _, e := range errors {
-		varName := "Err" + errorCodeToConstant(e.Code) + "Sentinel"
-		constName := "Err" + errorCodeToConstant(e.Code)
-		g.P(fmt.Sprintf("\t%s = cerr.NewCodedError(%s)", varName, constName))
-	}
-	g.P(")")
-	g.P()
 
 	// Generate init function
 	g.P("func init() {")

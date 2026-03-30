@@ -37,7 +37,7 @@ return nil, userv1.NewErrUserNotFound(userv1.UserNotFoundParams{
 | 📝 **Template Messages**      | `{{placeholder}}` → struct fields, validated by the compiler   |
 | 🔄 **Retryable Errors**       | Mark errors as retryable directly in proto                     |
 | 🪝 **Interceptor**            | Server-side hook for logging, metrics, and tracing             |
-| ✅ **errors.Is/As**           | Generated sentinels for standard Go error matching             |
+| ✅ **errors.As**              | Standard Go error matching for custom data extraction          |
 
 ## Quick Start
 
@@ -178,15 +178,6 @@ const (
     ErrRateLimited     cerr.ErrorCode = "ERROR_RATE_LIMITED"
 )
 
-// Sentinels for errors.Is matching.
-var (
-    ErrUserNotFoundSentinel    = cerr.NewCodedError(ErrUserNotFound)
-    ErrInvalidUserIdSentinel   = cerr.NewCodedError(ErrInvalidUserId)
-    ErrDeleteForbiddenSentinel = cerr.NewCodedError(ErrDeleteForbidden)
-    ErrEmailExistsSentinel     = cerr.NewCodedError(ErrEmailExists)
-    ErrRateLimitedSentinel     = cerr.NewCodedError(ErrRateLimited)
-)
-
 func init() { /* auto-registers all errors */ }
 
 // ── Typed constructors ──────────────────────────────────────────
@@ -286,15 +277,12 @@ if err != nil {
 }
 ```
 
-### Server-Side Error Matching (errors.Is / errors.As)
+### Server-Side Error Matching (errors.As)
 
 ```go
 connectErr := userv1.NewErrUserNotFound(userv1.UserNotFoundParams{Id: "123"})
 
-// Match using generated sentinel
-errors.Is(connectErr.Unwrap(), userv1.ErrUserNotFoundSentinel)  // true
-
-// Extract error details
+// Extract error details safely down to the core error
 var coded *cerr.CodedError
 if errors.As(connectErr.Unwrap(), &coded) {
     fmt.Println(coded.Code()) // "ERROR_USER_NOT_FOUND"

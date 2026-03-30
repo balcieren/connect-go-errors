@@ -181,19 +181,7 @@ func TestFromErrorNoMeta(t *testing.T) {
 	}
 }
 
-func TestCodedErrorIs(t *testing.T) {
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
-	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "1"})
 
-	if !errors.Is(connectErr.Unwrap(), sentinel) {
-		t.Error("expected errors.Is to match by code")
-	}
-
-	other := connecterrors.NewCodedError(connecterrors.ErrInternal)
-	if errors.Is(connectErr.Unwrap(), other) {
-		t.Error("should not match different code")
-	}
-}
 
 func TestCodedErrorAs(t *testing.T) {
 	connectErr := connecterrors.New(connecterrors.ErrNotFound, connecterrors.M{"id": "42"})
@@ -214,9 +202,12 @@ func TestWrapCodedError(t *testing.T) {
 	orig := errors.New("db connection lost")
 	connectErr := connecterrors.Wrap(connecterrors.ErrInternal, orig, connecterrors.M{})
 
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrInternal)
-	if !errors.Is(connectErr.Unwrap(), sentinel) {
-		t.Error("expected Wrap result to match sentinel via errors.Is")
+	var coded *connecterrors.CodedError
+	if !errors.As(connectErr.Unwrap(), &coded) {
+		t.Fatal("expected errors.As to extract CodedError")
+	}
+	if coded.Code() != string(connecterrors.ErrInternal) {
+		t.Errorf("Code() = %q, want %q", coded.Code(), connecterrors.ErrInternal)
 	}
 
 	// The original error should also be reachable via errors.Is
@@ -227,11 +218,6 @@ func TestWrapCodedError(t *testing.T) {
 
 func TestNewfCodedError(t *testing.T) {
 	connectErr := connecterrors.Newf(connecterrors.ErrNotFound, "user %s gone", "alice")
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
-
-	if !errors.Is(connectErr.Unwrap(), sentinel) {
-		t.Error("expected Newf result to match sentinel via errors.Is")
-	}
 
 	var coded *connecterrors.CodedError
 	if !errors.As(connectErr.Unwrap(), &coded) {
@@ -285,19 +271,7 @@ func TestExtractErrorCodeNoMeta(t *testing.T) {
 	}
 }
 
-func TestNewWithCodedError(t *testing.T) {
-	// Create a sentinel error (simulating generated code)
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
 
-	// Use sentinel with New() - this is the new feature
-	err := connecterrors.New(sentinel, connecterrors.M{"id": "123"})
-	if err.Code() != connect.CodeNotFound {
-		t.Errorf("Code() = %v, want CodeNotFound", err.Code())
-	}
-	if got := err.Meta().Get("x-error-code"); got != string(connecterrors.ErrNotFound) {
-		t.Errorf("x-error-code = %q, want %q", got, connecterrors.ErrNotFound)
-	}
-}
 
 func TestNewWithNilCode(t *testing.T) {
 	// Passing nil should not panic, should return Internal error
@@ -307,14 +281,7 @@ func TestNewWithNilCode(t *testing.T) {
 	}
 }
 
-func TestWrapWithCodedError(t *testing.T) {
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrInternal)
-	orig := errors.New("db error")
-	err := connecterrors.Wrap(sentinel, orig, connecterrors.M{})
-	if err.Code() != connect.CodeInternal {
-		t.Errorf("Code() = %v, want CodeInternal", err.Code())
-	}
-}
+
 
 func TestSetHeaderKeys(t *testing.T) {
 	// Restore default keys after test
@@ -381,10 +348,14 @@ func TestIsXxxPatternRawConnectError(t *testing.T) {
 	}
 }
 func TestCodedErrorErrorCodeDeprecated(t *testing.T) {
-	sentinel := connecterrors.NewCodedError(connecterrors.ErrNotFound)
-	// ErrorCode() is deprecated but should still work
-	if sentinel.ErrorCode() != string(connecterrors.ErrNotFound) {
-		t.Errorf("ErrorCode() = %q, want %q", sentinel.ErrorCode(), connecterrors.ErrNotFound)
+	connectErr := connecterrors.New(connecterrors.ErrNotFound, nil)
+	var coded *connecterrors.CodedError
+	if errors.As(connectErr.Unwrap(), &coded) {
+		if coded.ErrorCode() != string(connecterrors.ErrNotFound) {
+			t.Errorf("ErrorCode() = %q, want %q", coded.ErrorCode(), connecterrors.ErrNotFound)
+		}
+	} else {
+		t.Fatal("failed to extract coded error")
 	}
 }
 
